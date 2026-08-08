@@ -10,13 +10,15 @@ use PWT\Bookings\Repositories\BookingRepository;
 use PWT\Bookings\Validators\BookingValidator;
 use PWT\Frontend\Pricing;
 use PWT\Payments\PaymentManager;
+use PWT\Bookings\Services\BookingDataService;
 
 final class BookingService
 {
     public function __construct(
         private readonly BookingRepository $repository,
         private readonly BookingValidator $validator,
-        private readonly EmailService $emailService
+        private readonly EmailService $emailService,
+        private readonly BookingDataService $bookingDataService
     ) {
     }
 
@@ -43,6 +45,14 @@ final class BookingService
         }
 
         $booking = $validation['data'];
+
+        // New normalized booking model; legacy post remains for backward compatibility.
+        try {
+            $normalizedBookingId = $this->bookingDataService->syncLegacyBooking((int) $bookingId, $booking);
+            update_post_meta($bookingId, '_pwt_normalized_booking_id', $normalizedBookingId);
+        } catch (\Throwable $e) {
+            do_action('pwt/booking/normalization_failed', $bookingId, $e);
+        }
         $estimate = [];
         $payment = [];
 

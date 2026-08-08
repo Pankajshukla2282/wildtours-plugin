@@ -27,6 +27,8 @@ final class TaxonomyServiceProvider extends ServiceProvider
         VehicleType::class,
         Season::class,
         Activity::class,
+        Cuisine::class,
+        TripType::class,
     ];
 
     /**

@@ -16,6 +16,11 @@ use PWT\SCF\Groups\ReviewFields;
 use PWT\SCF\Groups\SafariFields;
 use PWT\SCF\Groups\TestimonialFields;
 use PWT\SCF\Groups\VehicleFields;
+use PWT\SCF\Groups\RestaurantFields;
+use PWT\SCF\Groups\LocalTripFields;
+use PWT\SCF\Groups\RoomTypeFields;
+use PWT\SCF\Groups\RoomUnitFields;
+use PWT\SCF\Groups\SafariScheduleFields;
 
 /**
  * Registers all SCF/ACF field groups.
@@ -32,6 +37,11 @@ final class SCFServiceProvider extends ServiceProvider
         PackageFields::class,
         ResortFields::class,
         VehicleFields::class,
+        RestaurantFields::class,
+        LocalTripFields::class,
+        RoomTypeFields::class,
+        RoomUnitFields::class,
+        SafariScheduleFields::class,
         DestinationFields::class,
         TestimonialFields::class,
         ReviewFields::class,

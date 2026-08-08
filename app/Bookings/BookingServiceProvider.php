@@ -1,39 +1,20 @@
 <?php
-
 declare(strict_types=1);
-
 namespace PWT\Bookings;
-
 defined('ABSPATH') || exit;
 
 use PWT\Core\ServiceProvider;
-use PWT\Bookings\Controllers\BookingController;
-use PWT\Payments\PaymentManager;
+use PWT\Bookings\Repositories\BookingRepository;
+use PWT\Availability\AvailabilityRepository;
+use PWT\Pricing\PricingService;
 
-/**
- * Registers booking services.
- */
 final class BookingServiceProvider extends ServiceProvider
 {
-    /**
-     * Register services.
-     */
     public function register(): void
     {
-        // Reserved for future container bindings.
+        $this->singleton(BookingRepository::class, BookingRepository::class);
+        $this->singleton(BookingItemRepository::class, BookingItemRepository::class);
+        $this->singleton(BookingOrchestrator::class, BookingOrchestrator::class);
     }
-
-    /**
-     * Boot booking module.
-     */
-    public function boot(): void
-    {
-        $controller = $this->make(BookingController::class);
-
-        $controller->register();
-
-        $paymentManager = $this->make(PaymentManager::class);
-
-        $paymentManager->register();
-    }
+    public function boot(): void {}
 }

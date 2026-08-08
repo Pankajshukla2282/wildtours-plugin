@@ -6,6 +6,8 @@ namespace PWT\Core;
 
 defined('ABSPATH') || exit;
 
+use PWT\Core\Database\Schema;
+
 /**
  * Plugin activation handler.
  */
@@ -16,6 +18,7 @@ final class Activator
      */
     public static function activate(): void
     {
+        Schema::install();
         self::registerPostTypes();
 
         flush_rewrite_rules();
