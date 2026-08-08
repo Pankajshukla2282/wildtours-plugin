@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Panna Wild Tour
  * Description: This is a WordPress plugins for Wild Tours and travels agency.
- * Version: 1.1.1
+ * Version: 1.1.2
  * Author: Panna Wild Tour
  * Author URI: https://www.pannawildtour.com
  * Requires at least: 6.7
