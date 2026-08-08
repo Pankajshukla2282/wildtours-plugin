@@ -17,13 +17,8 @@ foreach ($postTypes as $postType => $label) {
 }
 
 $bookingCount = (int) get_option('pwt_analytics_booking_count', 0);
-
-$bookingIds = get_posts([
-	'post_type' => 'pwt_booking',
-	'post_status' => 'publish',
-	'posts_per_page' => -1,
-	'fields' => 'ids',
-]);
+$bookingObj = wp_count_posts('pwt_booking');
+$totalBookings = (int) ($bookingObj->publish ?? 0);
 
 $statusCounts = [
 	'pending_payment' => 0,
@@ -34,28 +29,51 @@ $statusCounts = [
 	'cancelled' => 0,
 ];
 
-$popularPackageCounts = [];
+$topPackages = [];
 
-foreach ($bookingIds as $bookingId) {
-	$status = (string) get_post_meta((int) $bookingId, '_pwt_payment_status', true);
-	if ($status !== '' && isset($statusCounts[$status])) {
-		$statusCounts[$status]++;
-	}
+global $wpdb;
 
-	$packageId = (int) get_post_meta((int) $bookingId, '_pwt_package_id', true);
-	if ($packageId > 0) {
-		if (!isset($popularPackageCounts[$packageId])) {
-			$popularPackageCounts[$packageId] = 0;
+$statusRows = $wpdb->get_results(
+	"SELECT pm.meta_value AS payment_status, COUNT(*) AS total
+	FROM {$wpdb->postmeta} pm
+	INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+	WHERE p.post_type = 'pwt_booking'
+		AND p.post_status = 'publish'
+		AND pm.meta_key = '_pwt_payment_status'
+	GROUP BY pm.meta_value"
+);
+
+if (is_array($statusRows)) {
+	foreach ($statusRows as $row) {
+		$status = (string) ($row->payment_status ?? '');
+		if ($status !== '' && isset($statusCounts[$status])) {
+			$statusCounts[$status] = (int) ($row->total ?? 0);
 		}
-		$popularPackageCounts[$packageId]++;
 	}
 }
 
-arsort($popularPackageCounts);
-$topPackages = array_slice($popularPackageCounts, 0, 5, true);
+$topPackageRows = $wpdb->get_results(
+	"SELECT pm.meta_value AS package_id, COUNT(*) AS total
+	FROM {$wpdb->postmeta} pm
+	INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+	WHERE p.post_type = 'pwt_booking'
+		AND p.post_status = 'publish'
+		AND pm.meta_key = '_pwt_package_id'
+	GROUP BY pm.meta_value
+	ORDER BY total DESC
+	LIMIT 5"
+);
+
+if (is_array($topPackageRows)) {
+	foreach ($topPackageRows as $row) {
+		$packageId = absint((string) ($row->package_id ?? 0));
+		if ($packageId > 0) {
+			$topPackages[$packageId] = (int) ($row->total ?? 0);
+		}
+	}
+}
 
 $confirmedBookings = $statusCounts['partial_paid'] + $statusCounts['paid'];
-$totalBookings = count($bookingIds);
 $conversionRate = $totalBookings > 0 ? round(($confirmedBookings / $totalBookings) * 100, 2) : 0.0;
 ?>
 

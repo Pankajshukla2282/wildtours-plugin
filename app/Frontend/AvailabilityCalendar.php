@@ -83,8 +83,9 @@ class AvailabilityCalendar
         $bookings = get_posts([
             'post_type' => 'pwt_booking',
             'post_status' => 'publish',
-            'posts_per_page' => -1,
+            'posts_per_page' => $limit,
             'fields' => 'ids',
+            'no_found_rows' => true,
             'meta_query' => [
                 'relation' => 'AND',
                 [

@@ -14,15 +14,17 @@ final class EmailService
         int $bookingId,
         array $booking
     ): void {
-
-        wp_mail(
-
+        $sent = wp_mail(
             get_option('admin_email'),
-
             EmailTemplates::bookingAdminSubject($booking['name']),
-
             EmailTemplates::bookingAdminBody($booking)
         );
+
+        if (!$sent) {
+            error_log('PWT admin booking email failed for booking #' . $bookingId);
+            update_post_meta($bookingId, '_pwt_email_admin_failed', '1');
+            update_post_meta($bookingId, '_pwt_email_admin_failed_at', current_time('mysql'));
+        }
     }
 
     public function sendCustomerConfirmation(
@@ -34,16 +36,19 @@ final class EmailService
             return;
         }
 
-        wp_mail(
-
+        $sent = wp_mail(
             $booking['email'],
-
             __('Booking Confirmation', 'wildtours-plugin'),
-
             sprintf(
                 __('Thank you %s. Your booking request has been received.', 'wildtours-plugin'),
                 $booking['name']
             )
         );
+
+        if (!$sent) {
+            error_log('PWT customer booking email failed for booking #' . $bookingId);
+            update_post_meta($bookingId, '_pwt_email_customer_failed', '1');
+            update_post_meta($bookingId, '_pwt_email_customer_failed_at', current_time('mysql'));
+        }
     }
 }

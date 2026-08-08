@@ -92,10 +92,7 @@ final class BookingController
     {
         $settings = get_option('pwt_settings', []);
         $limit = max(1, absint($settings['rest_rate_limit_per_minute'] ?? 20));
-        $ip = (string) ($_SERVER['HTTP_X_FORWARDED_FOR']
-            ?: $_SERVER['HTTP_X_REAL_IP']
-            ?: $_SERVER['REMOTE_ADDR']
-            ?: 'unknown');
+        $ip = sanitize_text_field((string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
         $window = gmdate('YmdHi');
         $key = 'pwt_rl_' . md5($bucket . '|' . $ip . '|' . $window);
         $count = (int) get_transient($key);

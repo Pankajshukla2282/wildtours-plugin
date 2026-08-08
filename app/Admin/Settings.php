@@ -300,7 +300,14 @@ class Settings
         $sanitized['booking_email'] = sanitize_email($input['booking_email'] ?? '');
         $sanitized['hero_title'] = sanitize_text_field($input['hero_title'] ?? '');
         $sanitized['hero_subtitle'] = sanitize_textarea_field($input['hero_subtitle'] ?? '');
-        $sanitized['featured_package_ids'] = sanitize_text_field($input['featured_package_ids'] ?? '');
+        $featuredRaw = array_filter(array_map('absint', explode(',', (string) ($input['featured_package_ids'] ?? ''))));
+        $featuredValidated = [];
+        foreach ($featuredRaw as $featuredId) {
+            if (get_post_type($featuredId) === 'pwt_package' && get_post_status($featuredId) === 'publish') {
+                $featuredValidated[] = $featuredId;
+            }
+        }
+        $sanitized['featured_package_ids'] = implode(',', $featuredValidated);
         $sanitized['payment_page_url'] = esc_url_raw($input['payment_page_url'] ?? '');
         $sanitized['payment_upi_id'] = sanitize_text_field($input['payment_upi_id'] ?? '');
         $sanitized['payment_gateway'] = sanitize_key($input['payment_gateway'] ?? 'manual');
@@ -308,7 +315,15 @@ class Settings
         $sanitized['payment_methods'] = sanitize_text_field($input['payment_methods'] ?? 'upi,bank_transfer,cash');
         $sanitized['payment_advance_percent'] = max(1, min(100, absint($input['payment_advance_percent'] ?? 30)));
         $sanitized['payment_instructions'] = sanitize_textarea_field($input['payment_instructions'] ?? '');
-        $sanitized['blocked_dates'] = sanitize_text_field($input['blocked_dates'] ?? '');
+        $blockedRaw = array_filter(array_map('trim', explode(',', (string) ($input['blocked_dates'] ?? ''))));
+        $blockedValidated = [];
+        foreach ($blockedRaw as $blockedDate) {
+            $parsed = \DateTime::createFromFormat('Y-m-d', $blockedDate);
+            if ($parsed instanceof \DateTime && $parsed->format('Y-m-d') === $blockedDate) {
+                $blockedValidated[] = $blockedDate;
+            }
+        }
+        $sanitized['blocked_dates'] = implode(',', array_values(array_unique($blockedValidated)));
         $sanitized['daily_booking_limit'] = max(1, absint($input['daily_booking_limit'] ?? 6));
         $sanitized['rest_api_key'] = sanitize_text_field($input['rest_api_key'] ?? '');
         $sanitized['rest_rate_limit_per_minute'] = max(1, absint($input['rest_rate_limit_per_minute'] ?? 20));

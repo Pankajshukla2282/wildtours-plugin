@@ -18,13 +18,13 @@ class RestApi
         register_rest_route('pwt/v1', '/packages', [
             'methods' => 'GET',
             'callback' => [$this, 'packages'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => [$this, 'canReadPublicData'],
         ]);
 
         register_rest_route('pwt/v1', '/availability', [
             'methods' => 'GET',
             'callback' => [$this, 'availability'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => [$this, 'canReadPublicData'],
         ]);
 
         register_rest_route('pwt/v1', '/booking', [
@@ -38,6 +38,17 @@ class RestApi
                 'persons' => ['required' => true],
             ],
         ]);
+    }
+
+    public function canReadPublicData(
+        \WP_REST_Request $request
+    ): bool|\WP_Error {
+        $throttle = $this->enforceRateLimit($request, 'public_read');
+        if (is_wp_error($throttle)) {
+            return $throttle;
+        }
+
+        return true;
     }
 
     public function canCreateBooking(
@@ -134,6 +145,10 @@ class RestApi
             return new \WP_REST_Response(['message' => __('Travel date must be in YYYY-MM-DD format.', 'wildtours-plugin')], 422);
         }
 
+        if ($travelDate < current_time('Y-m-d')) {
+            return new \WP_REST_Response(['message' => __('Travel date must be in the future.', 'wildtours-plugin')], 422);
+        }
+
         if (!preg_match('/^\+?[0-9\s\-]{8,20}$/', $phone)) {
             return new \WP_REST_Response(['message' => __('Phone number format is invalid.', 'wildtours-plugin')], 422);
         }
@@ -188,7 +203,7 @@ class RestApi
     {
         $settings = get_option('pwt_settings', []);
         $limit = max(1, absint($settings['rest_rate_limit_per_minute'] ?? 20));
-        $ip = (string) ($request->get_header('x_forwarded_for') ?: $request->get_header('x_real_ip') ?: ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+        $ip = sanitize_text_field((string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
         $window = gmdate('YmdHi');
         $key = 'pwt_rl_' . md5($bucket . '|' . $ip . '|' . $window);
         $count = (int) get_transient($key);

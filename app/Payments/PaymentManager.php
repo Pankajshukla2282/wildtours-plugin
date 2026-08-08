@@ -25,6 +25,7 @@ class PaymentManager
         $paymentUrl = (string) ($intent['payment_url'] ?? '');
 
         update_post_meta($bookingId, '_pwt_payment_token', $token);
+        update_post_meta($bookingId, '_pwt_payment_token_expires', time() + DAY_IN_SECONDS);
         update_post_meta($bookingId, '_pwt_payment_status', 'pending_payment');
         update_post_meta($bookingId, '_pwt_payment_advance_percent', $advancePercent);
         update_post_meta($bookingId, '_pwt_payment_due_amount', $advanceAmount);
@@ -63,7 +64,18 @@ class PaymentManager
             ]],
         ]);
 
-        return (int) ($posts[0] ?? 0);
+        $bookingId = (int) ($posts[0] ?? 0);
+
+        if ($bookingId <= 0) {
+            return 0;
+        }
+
+        $expiresAt = (int) get_post_meta($bookingId, '_pwt_payment_token_expires', true);
+        if ($expiresAt > 0 && time() > $expiresAt) {
+            return 0;
+        }
+
+        return $bookingId;
     }
 
     public static function portalContext(string $token): array
