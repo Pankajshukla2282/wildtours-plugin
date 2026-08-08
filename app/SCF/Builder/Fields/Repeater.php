@@ -37,13 +37,13 @@ class Repeater extends Field
         return $this;
     }
 
-    public function min(int $min): static
+    public function min(int|float $min): static
     {
         $this->minRows = $min;
         return $this;
     }
 
-    public function max(int $max): static
+    public function max(int|float $max): static
     {
         $this->maxRows = $max;
         return $this;
