@@ -86,7 +86,7 @@ $actionUrl = $queriedObject instanceof WP_Term ? get_term_link($queriedObject) :
                 <?php while (have_posts()) : the_post(); ?>
                     <article class="pwt-card">
                         <?php if (has_post_thumbnail()) : ?>
-                            <div class="pwt-card-image"><?php the_post_thumbnail('large'); ?></div>
+                            <div class="pwt-card-image"><?php the_post_thumbnail('medium_large'); ?></div>
                         <?php endif; ?>
                         <div class="pwt-card-body">
                             <h3><?php the_title(); ?></h3>

@@ -16,7 +16,7 @@ while (have_posts()) : the_post();
         <article class="pwt-single-safari">
             <header class="pwt-single-hero">
                 <?php if (has_post_thumbnail()) : ?>
-                    <?php the_post_thumbnail('large'); ?>
+                    <?php the_post_thumbnail('medium_large'); ?>
                 <?php endif; ?>
             </header>
 
