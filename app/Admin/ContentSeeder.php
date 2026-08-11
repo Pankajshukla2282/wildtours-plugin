@@ -6,6 +6,8 @@ namespace PWT\Admin;
 
 defined('ABSPATH') || exit;
 
+use PWT\Core\Paths;
+
 /**
  * Imports starter content for faster website launch.
  */
@@ -134,7 +136,110 @@ final class ContentSeeder
             }
         }
 
-        $posts = [
+        $posts = $this->seedPosts();
+
+        foreach ($posts as $postConfig) {
+            $allowedProfiles = $postConfig['profiles'] ?? ['basic', 'full'];
+            if (!in_array($profile, $allowedProfiles, true)) {
+                continue;
+            }
+
+            if (!in_array($postConfig['post_type'], $enabledTypes, true)) {
+                continue;
+            }
+
+            if ($this->postExists($postConfig['post_type'], $postConfig['title'])) {
+                continue;
+            }
+
+            $postId = wp_insert_post(
+                [
+                    'post_type' => $postConfig['post_type'],
+                    'post_title' => $postConfig['title'],
+                    'post_excerpt' => $postConfig['excerpt'],
+                    'post_content' => $postConfig['content'],
+                    'post_status' => $postConfig['status'],
+                ],
+                true
+            );
+
+            if (is_wp_error($postId) || !is_numeric($postId)) {
+                continue;
+            }
+
+            ++$createdPosts;
+
+            foreach ($postConfig['meta'] as $metaKey => $metaValue) {
+                update_post_meta((int) $postId, (string) $metaKey, (string) $metaValue);
+            }
+
+            if (
+                $featuredMediaId > 0
+                && wp_attachment_is_image($featuredMediaId)
+                && !has_post_thumbnail((int) $postId)
+            ) {
+                if (set_post_thumbnail((int) $postId, $featuredMediaId)) {
+                    ++$featuredAssigned;
+                }
+            }
+
+            foreach ($postConfig['terms'] as $taxonomy => $termNames) {
+                if (!taxonomy_exists((string) $taxonomy)) {
+                    continue;
+                }
+
+                $termIds = [];
+                foreach ($termNames as $termName) {
+                    $term = term_exists((string) $termName, (string) $taxonomy);
+                    if (is_array($term) && !empty($term['term_id'])) {
+                        $termIds[] = (int) $term['term_id'];
+                    }
+                }
+
+                if (!empty($termIds)) {
+                    wp_set_object_terms((int) $postId, $termIds, (string) $taxonomy);
+                }
+            }
+        }
+
+        return [
+            'terms' => $createdTerms,
+            'posts' => $createdPosts,
+            'featured_images' => $featuredAssigned,
+        ];
+    }
+
+    /**
+     * Load seed posts from resources/content-seed-data.json.
+     *
+     * Falls back to the built-in starter posts when the file is missing
+     * or contains invalid data.
+     */
+    private function seedPosts(): array
+    {
+        $file = Paths::path('resources/content-seed-data.json');
+
+        if (is_readable($file)) {
+            $contents = file_get_contents($file);
+
+            if (is_string($contents)) {
+                $data = json_decode($contents, true);
+
+                if (is_array($data) && isset($data['posts']) && is_array($data['posts'])) {
+                    return $data['posts'];
+                }
+            }
+        }
+
+        return $this->defaultPosts();
+    }
+
+    /**
+     * Built-in starter posts used when the seed JSON file is unavailable.
+     */
+    private function defaultPosts(): array
+    {
+        return [
             [
                 'post_type' => 'pwt_destination',
                 'title' => 'Panna Tiger Reserve Core Experience',
@@ -251,76 +356,6 @@ final class ContentSeeder
                 'terms' => [],
                 'profiles' => ['full'],
             ],
-        ];
-
-        foreach ($posts as $postConfig) {
-            $allowedProfiles = $postConfig['profiles'] ?? ['basic', 'full'];
-            if (!in_array($profile, $allowedProfiles, true)) {
-                continue;
-            }
-
-            if (!in_array($postConfig['post_type'], $enabledTypes, true)) {
-                continue;
-            }
-
-            if ($this->postExists($postConfig['post_type'], $postConfig['title'])) {
-                continue;
-            }
-
-            $postId = wp_insert_post(
-                [
-                    'post_type' => $postConfig['post_type'],
-                    'post_title' => $postConfig['title'],
-                    'post_excerpt' => $postConfig['excerpt'],
-                    'post_content' => $postConfig['content'],
-                    'post_status' => $postConfig['status'],
-                ],
-                true
-            );
-
-            if (is_wp_error($postId) || !is_numeric($postId)) {
-                continue;
-            }
-
-            ++$createdPosts;
-
-            foreach ($postConfig['meta'] as $metaKey => $metaValue) {
-                update_post_meta((int) $postId, (string) $metaKey, (string) $metaValue);
-            }
-
-            if (
-                $featuredMediaId > 0
-                && wp_attachment_is_image($featuredMediaId)
-                && !has_post_thumbnail((int) $postId)
-            ) {
-                if (set_post_thumbnail((int) $postId, $featuredMediaId)) {
-                    ++$featuredAssigned;
-                }
-            }
-
-            foreach ($postConfig['terms'] as $taxonomy => $termNames) {
-                if (!taxonomy_exists((string) $taxonomy)) {
-                    continue;
-                }
-
-                $termIds = [];
-                foreach ($termNames as $termName) {
-                    $term = term_exists((string) $termName, (string) $taxonomy);
-                    if (is_array($term) && !empty($term['term_id'])) {
-                        $termIds[] = (int) $term['term_id'];
-                    }
-                }
-
-                if (!empty($termIds)) {
-                    wp_set_object_terms((int) $postId, $termIds, (string) $taxonomy);
-                }
-            }
-        }
-
-        return [
-            'terms' => $createdTerms,
-            'posts' => $createdPosts,
-            'featured_images' => $featuredAssigned,
         ];
     }
 

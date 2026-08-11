@@ -1,0 +1,401 @@
+{
+  "posts": [
+    {
+      "post_type": "pwt_destination",
+      "title": "Panna Tiger Reserve Core Experience",
+      "excerpt": "A premium wildlife destination for tiger tracking, birding, and scenic forest drives.",
+      "content": "Panna Tiger Reserve blends forest, river, and plateau landscapes for rich wildlife encounters. This destination is ideal for families, couples, and photography travelers who want guided, safe, and memorable jungle experiences.",
+      "status": "publish",
+      "meta": [],
+      "terms": {
+        "pwt_destination_category": [
+          "Wildlife",
+          "Nature Retreat"
+        ],
+        "pwt_activity": [
+          "Tiger Safari",
+          "Bird Watching"
+        ]
+      }
+    },
+    {
+      "post_type": "pwt_safari",
+      "title": "Sunrise Tiger Safari - Madla Gate",
+      "excerpt": "Morning core-zone safari with naturalist support and priority wildlife tracking routes.",
+      "content": "Start early and enter via Madla Gate for peak wildlife movement. This safari is curated for strong sightings, practical route flexibility, and smooth on-ground coordination.",
+      "status": "publish",
+      "meta": {
+        "duration": "4 to 5 hours",
+        "shift": "morning",
+        "meeting_point": "Madla Gate Reporting Point",
+        "regular_price": "4500",
+        "offer_price": "3999"
+      },
+      "terms": {
+        "pwt_safari_zone": [
+          "Madla Gate Core Zone"
+        ],
+        "pwt_vehicle_type": [
+          "Open Gypsy (6 Seater)"
+        ],
+        "pwt_season": [
+          "Peak (Nov-Feb)",
+          "Shoulder (Mar-Jun)"
+        ]
+      }
+    },
+    {
+      "post_type": "pwt_safari",
+      "title": "Morning Jeep Safari - Panna",
+      "excerpt": "Early morning drive for fresh tracks and active wildlife movement.",
+      "content": "Early morning drive for fresh tracks and active wildlife movement.",
+      "status": "publish",
+      "meta": {
+        "duration": "3 to 4 hours",
+        "shift": "morning",
+        "meeting_point": "Panna Safari Gate",
+        "regular_price": "3500",
+        "offer_price": "3200"
+      },
+      "terms": {
+        "pwt_safari_zone": [
+          "Madla Gate Core Zone"
+        ],
+        "pwt_vehicle_type": [
+          "Open Gypsy (6 Seater)"
+        ],
+        "pwt_season": [
+          "Peak (Nov-Feb)",
+          "Shoulder (Mar-Jun)"
+        ]
+      }
+    },
+    {
+      "post_type": "pwt_safari",
+      "title": "Evening Jeep Safari - Panna",
+      "excerpt": "Evening light and scenic jungle landscapes with wildlife opportunities.",
+      "content": "Evening light and scenic jungle landscapes with wildlife opportunities.",
+      "status": "publish",
+      "meta": {
+        "duration": "3 to 4 hours",
+        "shift": "evening",
+        "meeting_point": "Panna Safari Gate",
+        "regular_price": "3500",
+        "offer_price": "3200"
+      },
+      "terms": {
+        "pwt_safari_zone": [
+          "Madla Gate Core Zone"
+        ],
+        "pwt_vehicle_type": [
+          "Open Gypsy (6 Seater)"
+        ],
+        "pwt_season": [
+          "Peak (Nov-Feb)",
+          "Shoulder (Mar-Jun)"
+        ]
+      }
+    },
+    {
+      "post_type": "pwt_safari",
+      "title": "Full Day Safari Planning Support",
+      "excerpt": "Extended safari planning for deeper zone coverage and better sighting probability.",
+      "content": "Extended safari planning for deeper zone coverage and better sighting probability.",
+      "status": "publish",
+      "meta": {
+        "duration": "Full day",
+        "shift": "full_day",
+        "meeting_point": "As per approved route",
+        "regular_price": "12999",
+        "offer_price": "11999"
+      },
+      "terms": {
+        "pwt_safari_zone": [
+          "Madla Gate Core Zone",
+          "Hinauta Gate Core Zone",
+          "Akola Buffer Zone"
+        ],
+        "pwt_vehicle_type": [
+          "Open Gypsy (6 Seater)"
+        ],
+        "pwt_season": [
+          "Peak (Nov-Feb)",
+          "Shoulder (Mar-Jun)"
+        ]
+      }
+    },
+    {
+      "post_type": "pwt_package",
+      "title": "2N/3D Panna Tiger Escape",
+      "excerpt": "A quick and comfortable wildlife break with one sunrise safari, local transfers, and curated stay.",
+      "content": "Designed for weekend travelers, this package combines safari timing, stay comfort, and local coordination. Suitable for families and first-time visitors looking for a complete short itinerary.",
+      "status": "publish",
+      "meta": {
+        "regular_price": "18500",
+        "offer_price": "16999",
+        "duration": "2 Nights / 3 Days",
+        "days": "3",
+        "nights": "2",
+        "peak_multiplier": "1.20",
+        "shoulder_multiplier": "1.00",
+        "monsoon_multiplier": "0.88"
+      },
+      "terms": {
+        "pwt_package_category": [
+          "Family Safari Packages",
+          "Weekend Tours"
+        ],
+        "pwt_activity": [
+          "Tiger Safari",
+          "Bird Watching"
+        ],
+        "pwt_season": [
+          "Peak (Nov-Feb)",
+          "Shoulder (Mar-Jun)"
+        ]
+      }
+    },
+    {
+      "post_type": "pwt_package",
+      "title": "2D/1N Panna Quick Safari Escape",
+      "excerpt": "Ideal for weekend travelers looking for one safari and a comfortable stay.",
+      "content": "Includes: 1 night stay, 1 safari booking assistance, basic itinerary support.\nExcludes: Entry fees where applicable, personal expenses, meals unless specified.",
+      "status": "publish",
+      "meta": {
+        "duration": "2 days / 1 night",
+        "days": "2",
+        "nights": "1",
+        "regular_price": "10999",
+        "offer_price": "9499"
+      },
+      "terms": {
+        "pwt_package_category": [
+          "Weekend Tours"
+        ],
+        "pwt_activity": [
+          "Tiger Safari"
+        ],
+        "pwt_season": [
+          "Peak (Nov-Feb)",
+          "Shoulder (Mar-Jun)"
+        ]
+      }
+    },
+    {
+      "post_type": "pwt_package",
+      "title": "3D/2N Panna Family Wildlife Tour",
+      "excerpt": "Family-friendly package with balanced safari and relaxation time.",
+      "content": "Includes: 2 night stay, safari planning support, route and sightseeing guidance.\nExcludes: Camera fee, personal expenses, optional add-on activities.",
+      "status": "publish",
+      "meta": {
+        "duration": "3 days / 2 nights",
+        "days": "3",
+        "nights": "2",
+        "regular_price": "16999",
+        "offer_price": "14999"
+      },
+      "terms": {
+        "pwt_package_category": [
+          "Family Safari Packages"
+        ],
+        "pwt_activity": [
+          "Tiger Safari",
+          "Bird Watching"
+        ],
+        "pwt_season": [
+          "Peak (Nov-Feb)",
+          "Shoulder (Mar-Jun)"
+        ]
+      }
+    },
+    {
+      "post_type": "pwt_package",
+      "title": "3D/2N Panna Photography Safari Plan",
+      "excerpt": "Designed for wildlife enthusiasts and photographers.",
+      "content": "Includes: 2 night stay, slot strategy support, early departure coordination.\nExcludes: Special permits, equipment rental, personal expenses.",
+      "status": "publish",
+      "meta": {
+        "duration": "3 days / 2 nights",
+        "days": "3",
+        "nights": "2",
+        "regular_price": "19999",
+        "offer_price": "17999"
+      },
+      "terms": {
+        "pwt_package_category": [
+          "Couple Getaway Packages"
+        ],
+        "pwt_activity": [
+          "Tiger Safari",
+          "Bird Watching"
+        ],
+        "pwt_season": [
+          "Peak (Nov-Feb)",
+          "Shoulder (Mar-Jun)"
+        ]
+      }
+    },
+    {
+      "post_type": "pwt_package",
+      "title": "4D/3N Panna and Nearby Destinations Tour",
+      "excerpt": "A complete wildlife and sightseeing plan for longer stays.",
+      "content": "Includes: 3 night stay, safari planning, nearby destination add-on guidance.\nExcludes: Monument tickets, shopping, out-of-itinerary transfers.",
+      "status": "publish",
+      "meta": {
+        "duration": "4 days / 3 nights",
+        "days": "4",
+        "nights": "3",
+        "regular_price": "24999",
+        "offer_price": "22999"
+      },
+      "terms": {
+        "pwt_package_category": [
+          "Family Safari Packages",
+          "Weekend Tours"
+        ],
+        "pwt_activity": [
+          "Tiger Safari",
+          "Waterfall Trail"
+        ],
+        "pwt_season": [
+          "Peak (Nov-Feb)",
+          "Shoulder (Mar-Jun)"
+        ]
+      }
+    },
+    {
+      "post_type": "pwt_faq",
+      "title": "What is the best time to visit Panna Tiger Reserve?",
+      "excerpt": "",
+      "content": "The best period for wildlife sightings is from November to June. Winter is pleasant, while late summer can improve waterhole sightings.",
+      "status": "publish",
+      "meta": [],
+      "terms": []
+    },
+    {
+      "post_type": "pwt_faq",
+      "title": "How many safaris should I book for good sightings?",
+      "excerpt": "",
+      "content": "For better sighting probability, book at least two drives: one sunrise and one evening safari.",
+      "status": "publish",
+      "meta": [],
+      "terms": []
+    },
+    {
+      "post_type": "pwt_faq",
+      "title": "Can tiger sighting be guaranteed?",
+      "excerpt": "",
+      "content": "",
+      "status": "publish",
+      "meta": [],
+      "terms": []
+    },
+    {
+      "post_type": "pwt_faq",
+      "title": "How many safaris should I book for a good experience?",
+      "excerpt": "",
+      "content": "",
+      "status": "publish",
+      "meta": [],
+      "terms": []
+    },
+    {
+      "post_type": "pwt_faq",
+      "title": "Are safari permits included in packages?",
+      "excerpt": "",
+      "content": "",
+      "status": "publish",
+      "meta": [],
+      "terms": []
+    },
+    {
+      "post_type": "pwt_faq",
+      "title": "Do you offer custom packages?",
+      "excerpt": "",
+      "content": "",
+      "status": "publish",
+      "meta": [],
+      "terms": []
+    },
+    {
+      "post_type": "pwt_faq",
+      "title": "Is transport available?",
+      "excerpt": "",
+      "content": "",
+      "status": "publish",
+      "meta": [],
+      "terms": []
+    },
+    {
+      "post_type": "pwt_faq",
+      "title": "Is WhatsApp support available?",
+      "excerpt": "",
+      "content": "",
+      "status": "publish",
+      "meta": [],
+      "terms": []
+    },
+    {
+      "post_type": "pwt_faq",
+      "title": "How early should I book?",
+      "excerpt": "",
+      "content": "",
+      "status": "publish",
+      "meta": [],
+      "terms": []
+    },
+    {
+      "post_type": "pwt_testimonial",
+      "title": "Smooth Family Safari Planning",
+      "excerpt": "",
+      "content": "Our 3-day family tour was coordinated perfectly. Safari timing, stay, and transfers were all smooth and professional.",
+      "status": "publish",
+      "meta": [],
+      "terms": []
+    },
+    {
+      "post_type": "pwt_resort",
+      "title": "Forest Edge Eco Resort - Panna",
+      "excerpt": "Comfortable eco-stay with quick access to safari gates and curated local hospitality.",
+      "content": "Forest Edge Eco Resort provides clean rooms, local cuisine, and timely safari support. Suitable for families and photographers who value location and practical safari logistics.",
+      "status": "publish",
+      "meta": [],
+      "terms": [],
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "post_type": "pwt_vehicle",
+      "title": "Open Gypsy 6-Seater - Safari Fleet",
+      "excerpt": "Official safari-compatible open vehicle with trained driver support.",
+      "content": "Primary vehicle for core and buffer wildlife drives. Best suited for small groups and photographers requiring open-angle visibility.",
+      "status": "publish",
+      "meta": [],
+      "terms": {
+        "pwt_vehicle_type": [
+          "Open Gypsy (6 Seater)"
+        ]
+      },
+      "profiles": [
+        "full"
+      ]
+    },
+    {
+      "post_type": "pwt_review",
+      "title": "Memorable Tiger Sighting Experience",
+      "excerpt": "Well-coordinated safari and friendly support team throughout the trip.",
+      "content": "From pickup to safari execution, everything was on time. We were briefed clearly and had a memorable tiger sighting in the core zone.",
+      "status": "publish",
+      "meta": {
+        "rating": "5",
+        "guest_city": "Bhopal",
+        "verified": "1"
+      },
+      "terms": [],
+      "profiles": [
+        "full"
+      ]
+    }
+  ]
+}

@@ -174,6 +174,20 @@
     margin-bottom: 6px;
 }
 
+.pwt-contact-list a {
+    color: var(--pwt-moss);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.pwt-contact-list a:hover {
+    text-decoration: underline;
+}
+
+.pwt-contact-card {
+    border-top: 4px solid var(--pwt-gold);
+}
+
 .pwt-grid-two {
     display: grid;
     grid-template-columns: 1fr;
@@ -218,6 +232,16 @@
 
 .pwt-btn:hover {
     filter: brightness(0.96);
+}
+
+.pwt-booking-form {
+    margin-top: 18px;
+    border-top: 1px solid rgba(18, 53, 36, 0.12);
+    padding-top: 18px;
+}
+
+.pwt-booking-form .pwt-btn {
+    margin-top: 14px;
 }
 
 .pwt-text-link {
