@@ -379,3 +379,59 @@
         align-items: start;
     }
 }
+
+
+/* PWT component-owned media: dynamic at every resolution. */
+.pwt-single-wrap,
+.pwt-single-hero,
+.pwt-featured-image,
+.pwt-single-wrap figure {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: auto;
+    box-sizing: border-box;
+}
+
+.pwt-single-hero,
+.pwt-featured-image,
+.pwt-single-wrap figure {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+}
+
+.pwt-single-hero img,
+.pwt-featured-image img,
+.pwt-single-wrap figure img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: auto;
+    max-height: none;
+    margin-inline: auto;
+    object-fit: contain;
+    object-position: center;
+    transform: none;
+    clip-path: none;
+    mask: none;
+    box-sizing: border-box;
+}
+
+/* Inline/editor dimensions must not crop PWT content images. */
+.pwt-single-wrap figure[style],
+.pwt-single-wrap figure img[style] {
+    max-width: 100% !important;
+}
+
+@media (max-width: 960px) {
+    .pwt-single-wrap,
+    .pwt-single-hero,
+    .pwt-featured-image,
+    .pwt-single-wrap figure {
+        margin-inline: 0;
+        padding-inline: 0;
+    }
+}

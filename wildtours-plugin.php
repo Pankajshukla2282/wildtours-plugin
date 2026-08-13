@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Panna Wild Tour
  * Description: Core content, booking, availability, pricing, inventory, payments and integrations for Panna Wild Tour.
- * Version: 2.2.8
+ * Version: 2.2.9
  * Author: Panna Wild Tour
  * Author URI: https://www.pannawildtour.com
  * Requires at least: 6.7
@@ -13,7 +13,7 @@
 
 defined('ABSPATH') || exit;
 
-define('PWT_VERSION', '2.2.8');
+define('PWT_VERSION', '2.2.9');
 define('PWT_PLUGIN_FILE', __FILE__);
 define('PWT_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
