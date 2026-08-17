@@ -21,6 +21,7 @@ use PWT\SCF\Groups\LocalTripFields;
 use PWT\SCF\Groups\RoomTypeFields;
 use PWT\SCF\Groups\RoomUnitFields;
 use PWT\SCF\Groups\SafariScheduleFields;
+use PWT\SCF\Groups\NavigationFields;
 
 /**
  * Registers all SCF/ACF field groups.
@@ -46,6 +47,7 @@ final class SCFServiceProvider extends ServiceProvider
         TestimonialFields::class,
         ReviewFields::class,
         FAQFields::class,
+        NavigationFields::class,
     ];
 
     /**

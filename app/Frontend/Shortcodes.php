@@ -17,6 +17,7 @@ class Shortcodes
         add_shortcode('pwt_reviews', [$this, 'reviews']);
         add_shortcode('pwt_contact_card', [$this, 'contactCard']);
         add_shortcode('pwt_booking_form', [$this, 'bookingForm']);
+        add_shortcode('pwt_contact_form', [$this, 'contactForm']);
         add_shortcode('pwt_payment_page', [$this, 'paymentPage']);
     }
 
@@ -265,6 +266,17 @@ class Shortcodes
     public function bookingForm(): string
     {
         return (new \PWT\Bookings\BookingForm())->render();
+    }
+
+    public function contactForm(): string
+    {
+        $fluentShortcode = \PWT\Integrations\FluentForms::shortcode(\PWT\Integrations\FluentContactHandler::FORM_TITLE);
+
+        if ($fluentShortcode !== '') {
+            return do_shortcode($fluentShortcode); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        }
+
+        return $this->bookingForm();
     }
 
     public function paymentPage(): string

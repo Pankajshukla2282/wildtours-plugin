@@ -8,6 +8,23 @@ class BookingForm
 {
 	public function render(): string
 	{
+		$fluentShortcode = \PWT\Integrations\FluentForms::shortcode(\PWT\Integrations\FluentBookingHandler::FORM_TITLE);
+
+		if ($fluentShortcode !== '') {
+			ob_start();
+			?>
+			<section class="pwt-section" id="pwt-booking">
+				<header class="pwt-section-header">
+					<h2><?php esc_html_e('Book Your Wild Tour', 'wildtours-plugin'); ?></h2>
+					<p><?php esc_html_e('Share your travel date and preferences. We will confirm availability and pricing.', 'wildtours-plugin'); ?></p>
+				</header>
+				<?php echo do_shortcode($fluentShortcode); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			</section>
+			<?php
+
+			return ob_get_clean();
+		}
+
 		$currentPostId = get_queried_object_id();
 		$defaultPackageId = is_singular('pwt_package') ? (int) $currentPostId : 0;
 
