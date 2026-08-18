@@ -12,8 +12,5 @@ class Gallery extends PostType
 
     protected string $plural='Galleries';
 
-    protected function menuIcon(): string
-    {
-        return 'dashicons-format-gallery';
-    }
+    protected string $menuIcon = 'dashicons-format-gallery';
 }

@@ -22,17 +22,30 @@ final class AvailabilityRepository
             max(0, $blocked),
             sanitize_key($status)
         ));
+        if ($result !== false) {
+            $this->flush($resourceId, $resourceType, $date);
+        }
         return $result !== false;
     }
 
     public function get(int $resourceId, string $resourceType, string $date): array
     {
+        $key = $this->cacheKey($resourceId, $resourceType, $date);
+        $cached = wp_cache_get($key, 'pwt_availability');
+        if (is_array($cached)) {
+            return $cached;
+        }
+
         global $wpdb;
         $row = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM " . Schema::tables()['availability'] . " WHERE resource_type=%s AND resource_id=%d AND service_date=%s LIMIT 1",
             sanitize_key($resourceType), $resourceId, $date
         ), ARRAY_A);
-        return is_array($row) ? $row : [];
+
+        $row = is_array($row) ? $row : [];
+        wp_cache_set($key, $row, 'pwt_availability', 60);
+
+        return $row;
     }
     public function check(int $resourceId, string $resourceType, string $date, int $quantity = 1): array
     {
@@ -63,6 +76,7 @@ final class AvailabilityRepository
             $quantity, $type, $resourceId, sanitize_text_field($date), $quantity
         ));
         if ($result === 1) {
+            $this->flush($resourceId, $resourceType, $date);
             return true;
         }
 
@@ -78,6 +92,9 @@ final class AvailabilityRepository
              VALUES (%s, %d, %s, %d, %d, %d, %s)",
             $type, $resourceId, sanitize_text_field($date), $quantity, $quantity, 0, 'open'
         ));
+        if ($inserted !== false) {
+            $this->flush($resourceId, $resourceType, $date);
+        }
         return $inserted !== false;
     }
 
@@ -90,6 +107,19 @@ final class AvailabilityRepository
              WHERE resource_type=%s AND resource_id=%d AND service_date=%s",
             max(1, $quantity), sanitize_key($resourceType), $resourceId, sanitize_text_field($date)
         ));
+        if ($result !== false) {
+            $this->flush($resourceId, $resourceType, $date);
+        }
         return $result !== false;
+    }
+
+    private function cacheKey(int $resourceId, string $resourceType, string $date): string
+    {
+        return 'avail_' . sanitize_key($resourceType) . '_' . $resourceId . '_' . sanitize_text_field($date);
+    }
+
+    private function flush(int $resourceId, string $resourceType, string $date): void
+    {
+        wp_cache_delete($this->cacheKey($resourceId, $resourceType, $date), 'pwt_availability');
     }
 }

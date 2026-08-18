@@ -12,8 +12,5 @@ class Destination extends PostType
 
     protected string $plural='Destinations';
 
-    protected function menuIcon(): string
-    {
-        return 'dashicons-location';
-    }
+    protected string $menuIcon = 'dashicons-location';
 }

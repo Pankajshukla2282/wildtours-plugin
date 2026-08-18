@@ -18,7 +18,7 @@ class Menu
         add_menu_page(
             __('Panna Wild Tour', 'wildtours-plugin'),
             __('Panna Wild Tour', 'wildtours-plugin'),
-            'manage_options',
+            'pwt_manage_operations',
             'pwt-dashboard',
             [$this, 'dashboard'],
             'dashicons-palmtree',
@@ -29,7 +29,7 @@ class Menu
             'pwt-dashboard',
             __('Dashboard', 'wildtours-plugin'),
             __('Dashboard', 'wildtours-plugin'),
-            'manage_options',
+            'pwt_manage_operations',
             'pwt-dashboard',
             [$this, 'dashboard']
         );

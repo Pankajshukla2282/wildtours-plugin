@@ -19,7 +19,7 @@ final class TaxonomyServiceProvider extends ServiceProvider
      *
      * @var array<class-string<TaxonomyInterface>>
      */
-    private const TAXONOMIES = [
+    public const TAXONOMIES = [
         SafariZone::class,
         DestinationCategory::class,
         PackageCategory::class,

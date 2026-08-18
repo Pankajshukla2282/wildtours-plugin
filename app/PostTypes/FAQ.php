@@ -12,8 +12,5 @@ class FAQ extends PostType
 
     protected string $plural='FAQs';
 
-    protected function menuIcon(): string
-    {
-        return 'dashicons-editor-help';
-    }
+    protected string $menuIcon = 'dashicons-editor-help';
 }

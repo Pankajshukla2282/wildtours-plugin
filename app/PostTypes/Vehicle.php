@@ -12,8 +12,5 @@ class Vehicle extends PostType
 
     protected string $plural='Vehicles';
 
-    protected function menuIcon(): string
-    {
-        return 'dashicons-car';
-    }
+    protected string $menuIcon = 'dashicons-car';
 }

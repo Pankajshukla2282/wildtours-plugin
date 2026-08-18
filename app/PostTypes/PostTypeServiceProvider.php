@@ -18,7 +18,7 @@ final class PostTypeServiceProvider extends ServiceProvider
      *
      * @var array<class-string>
      */
-    private const POST_TYPES = [
+    public const POST_TYPES = [
         Safari::class,
         Package::class,
         Resort::class,
