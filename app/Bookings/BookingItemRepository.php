@@ -24,6 +24,9 @@ final class BookingItemRepository
             'end_date' => sanitize_text_field((string)($data['end_date'] ?? $data['service_date'] ?? '')) ?: null,
             'unit_price' => $unit,
             'total' => $total,
+            'cost' => max(0, (float)($data['cost'] ?? 0)),
+            'vendor_id' => absint($data['vendor_id'] ?? 0) ?: null,
+            'vendor_name' => sanitize_text_field((string)($data['vendor_name'] ?? '')) ?: null,
             'meta' => wp_json_encode(is_array($data['meta'] ?? null) ? $data['meta'] : []),
             'created_at' => current_time('mysql'),
         ]);

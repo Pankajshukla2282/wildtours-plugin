@@ -12,6 +12,7 @@ use PWT\Customers\CustomerRepository;
 use PWT\Customers\TravelerRepository;
 use PWT\Pricing\PricingService;
 use PWT\Settings\Settings;
+use PWT\Vendors\CostService;
 use WP_Error;
 
 final class BookingOrchestrator
@@ -24,7 +25,8 @@ final class BookingOrchestrator
         private readonly PricingService $pricing,
         private readonly HoldService $holds,
         private readonly CustomerRepository $customers,
-        private readonly TravelerRepository $travelers
+        private readonly TravelerRepository $travelers,
+        private readonly CostService $costs
     ) {}
 
     public function create(array $request): int|WP_Error
@@ -68,8 +70,9 @@ final class BookingOrchestrator
             $quote = $this->pricing->quote($itemId, $itemType, $date, $quantity, (float)($item['unit_price'] ?? 0));
             $unit = (float)$quote['unit_price'];
             $subtotal = (float)$quote['total'];
+            $costInfo = $this->costs->forResource($itemId, $itemType, $date, $quantity);
 
-            $prepared[] = compact('itemType','itemId','date','start','end','quantity','unit','subtotal','item');
+            $prepared[] = compact('itemType','itemId','date','start','end','quantity','unit','subtotal','costInfo','item');
             $total += $subtotal;
 
             $travelStart = $travelStart === null || $start < $travelStart ? $start : $travelStart;
@@ -131,6 +134,9 @@ final class BookingOrchestrator
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit'],
                     'subtotal' => $item['subtotal'],
+                    'cost' => $item['costInfo']['cost'],
+                    'vendor_id' => $item['costInfo']['vendor_id'],
+                    'vendor_name' => $item['costInfo']['vendor_name'],
                     'meta' => $item['item']['meta'] ?? [],
                 ]);
 

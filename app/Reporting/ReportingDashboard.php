@@ -20,7 +20,7 @@ final class ReportingDashboard
         $to = isset($_GET['to']) ? sanitize_text_field(wp_unslash($_GET['to'])) : current_time('Y-m-d');
         $from = isset($_GET['from']) ? sanitize_text_field(wp_unslash($_GET['from'])) : gmdate('Y-m-d', strtotime('-30 days'));
         $report = new ReportService();
-        $summary = $report->summary($from, $to);
+        $summary = $report->summaryWithMargin($from, $to);
         $statuses = $report->bookingsByStatus($from, $to);
         $services = $report->topServices($from, $to);
         ?>

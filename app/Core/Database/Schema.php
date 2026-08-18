@@ -5,7 +5,7 @@ defined('ABSPATH') || exit;
 
 final class Schema
 {
-    public const VERSION = '2.4.0';
+    public const VERSION = '2.5.0';
 
     public static function tables(): array
     {
@@ -20,6 +20,9 @@ final class Schema
             'holds'        => $wpdb->prefix . 'pwt_inventory_holds',
             'audit'        => $wpdb->prefix . 'pwt_audit_log',
             'travelers'    => $wpdb->prefix . 'pwt_travelers',
+            'vendors'      => $wpdb->prefix . 'pwt_vendors',
+            'vendor_rates' => $wpdb->prefix . 'pwt_vendor_rates',
+            'settlements'  => $wpdb->prefix . 'pwt_vendor_settlements',
         ];
     }
 
@@ -88,11 +91,15 @@ final class Schema
             end_date DATE NULL,
             unit_price DECIMAL(12,2) NOT NULL DEFAULT 0,
             total DECIMAL(12,2) NOT NULL DEFAULT 0,
+            cost DECIMAL(12,2) NOT NULL DEFAULT 0,
+            vendor_id BIGINT UNSIGNED NULL,
+            vendor_name VARCHAR(255) NULL,
             meta LONGTEXT NULL,
             created_at DATETIME NOT NULL,
             PRIMARY KEY (id),
             KEY booking_id (booking_id),
-            KEY object_lookup (item_type, object_id)
+            KEY object_lookup (item_type, object_id),
+            KEY vendor_id (vendor_id)
         ) $c;";
 
         $sql[] = "CREATE TABLE {$t['availability']} (
@@ -200,6 +207,62 @@ final class Schema
             updated_at DATETIME NOT NULL,
             PRIMARY KEY (id),
             KEY booking_id (booking_id)
+        ) $c;";
+
+        $sql[] = "CREATE TABLE {$t['vendors']} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            name VARCHAR(255) NOT NULL,
+            vendor_type VARCHAR(40) NOT NULL DEFAULT 'other',
+            contact_person VARCHAR(190) NULL,
+            email VARCHAR(190) NULL,
+            phone VARCHAR(50) NULL,
+            pan VARCHAR(30) NULL,
+            gstin VARCHAR(30) NULL,
+            bank_details TEXT NULL,
+            notes TEXT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'active',
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY vendor_type (vendor_type),
+            KEY status (status)
+        ) $c;";
+
+        $sql[] = "CREATE TABLE {$t['vendor_rates']} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            vendor_id BIGINT UNSIGNED NOT NULL,
+            resource_type VARCHAR(40) NOT NULL,
+            resource_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            rate_name VARCHAR(190) NULL,
+            unit_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+            currency VARCHAR(3) NOT NULL DEFAULT 'INR',
+            start_date DATE NULL,
+            end_date DATE NULL,
+            priority INT NOT NULL DEFAULT 10,
+            notes TEXT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'active',
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY vendor_resource (vendor_id, resource_type, resource_id),
+            KEY vendor_active (vendor_id, status)
+        ) $c;";
+
+        $sql[] = "CREATE TABLE {$t['settlements']} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            vendor_id BIGINT UNSIGNED NOT NULL,
+            booking_id BIGINT UNSIGNED NULL,
+            amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+            currency VARCHAR(3) NOT NULL DEFAULT 'INR',
+            reference VARCHAR(190) NULL,
+            settled_at DATETIME NOT NULL,
+            notes TEXT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY vendor_id (vendor_id),
+            KEY booking_id (booking_id),
+            KEY settled_at (settled_at)
         ) $c;";
 
         foreach ($sql as $statement) {

@@ -39,7 +39,17 @@ final class ReportService
             'customers' => (int)$wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*) FROM {$c} WHERE created_at BETWEEN %s AND %s", $from.' 00:00:00', $to.' 23:59:59'
             )),
+            'vendor_costs' => (float)$wpdb->get_var($wpdb->prepare(
+                "SELECT COALESCE(SUM(bi.cost),0) FROM {$b} b INNER JOIN " . Schema::tables()['items'] . " bi ON bi.booking_id=b.id WHERE b.created_at BETWEEN %s AND %s", $from.' 00:00:00', $to.' 23:59:59'
+            )),
         ];
+    }
+
+    public function summaryWithMargin(string $from, string $to): array
+    {
+        $summary = $this->summary($from, $to);
+        $summary['estimated_margin'] = round((float)$summary['gross_booking_value'] - (float)$summary['vendor_costs'], 2);
+        return $summary;
     }
 
     public function bookingsByStatus(string $from, string $to): array

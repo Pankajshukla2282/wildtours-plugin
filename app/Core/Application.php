@@ -27,6 +27,7 @@ use PWT\Customers\CustomerServiceProvider;
 use PWT\Pricing\PricingServiceProvider;
 use PWT\Admin\OperationsServiceProvider;
 use PWT\Logging\LogServiceProvider;
+use PWT\Vendors\VendorServiceProvider;
 
 /**
  * Plugin application.
@@ -58,6 +59,7 @@ final class Application
         OperationsServiceProvider::class,
         IntegrationServiceProvider::class,
         LogServiceProvider::class,
+        VendorServiceProvider::class,
     ];
 
     private Container $container;
