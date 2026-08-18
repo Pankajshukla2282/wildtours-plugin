@@ -2,12 +2,16 @@
 
 namespace PWT\API;
 
-use PWT\Frontend\Pricing;
+use PWT\Bookings\Services\BookingService;
 
 defined('ABSPATH') || exit;
 
 class RestApi
 {
+    public function __construct(private readonly BookingService $bookingService)
+    {
+    }
+
     public function register(): void
     {
         add_action('rest_api_init', [$this, 'routes']);
@@ -21,12 +25,7 @@ class RestApi
             'permission_callback' => [$this, 'canReadPublicData'],
         ]);
 
-        register_rest_route('pwt/v1', '/availability', [
-            'methods' => 'GET',
-            'callback' => [$this, 'availability'],
-            'permission_callback' => [$this, 'canReadPublicData'],
-        ]);
-
+        // Availability is owned by ArchitectureRestApi to keep one canonical public route.
         register_rest_route('pwt/v1', '/booking', [
             'methods' => 'POST',
             'callback' => [$this, 'booking'],
@@ -105,28 +104,6 @@ class RestApi
         return new \WP_REST_Response(['data' => $items], 200);
     }
 
-    public function availability(\WP_REST_Request $request): \WP_REST_Response
-    {
-        $packageId = absint((string) $request->get_param('package_id'));
-        $date = sanitize_text_field((string) $request->get_param('date'));
-
-        if (!$packageId || !$date) {
-            return new \WP_REST_Response(['message' => __('package_id and date are required.', 'wildtours-plugin')], 422);
-        }
-
-        if (!$this->isValidDate($date)) {
-            return new \WP_REST_Response(['message' => __('Date must be in YYYY-MM-DD format.', 'wildtours-plugin')], 422);
-        }
-
-        $available = \PWT\Frontend\AvailabilityCalendar::isDateAvailable($packageId, $date);
-
-        return new \WP_REST_Response([
-            'package_id' => $packageId,
-            'date' => $date,
-            'available' => $available,
-        ], 200);
-    }
-
     public function booking(\WP_REST_Request $request): \WP_REST_Response
     {
         $name = sanitize_text_field((string) $request->get_param('name'));
@@ -161,34 +138,24 @@ class RestApi
             return new \WP_REST_Response(['message' => __('Selected date is not available.', 'wildtours-plugin')], 409);
         }
 
-        $bookingId = wp_insert_post([
-            'post_type' => 'pwt_booking',
-            'post_status' => 'publish',
-            'post_title' => sprintf('%s - %s', $name, current_time('mysql')),
-        ], true);
+        $result = $this->bookingService->create([
+            'name' => $name,
+            'phone' => $phone,
+            'email' => $email,
+            'travel_date' => $travelDate,
+            'persons' => $persons,
+            'package_id' => $packageId,
+            'message' => $message,
+        ]);
 
-        if (is_wp_error($bookingId)) {
-            return new \WP_REST_Response(['message' => __('Unable to create booking.', 'wildtours-plugin')], 500);
-        }
-
-        update_post_meta($bookingId, '_pwt_name', $name);
-        update_post_meta($bookingId, '_pwt_phone', $phone);
-        update_post_meta($bookingId, '_pwt_email', $email);
-        update_post_meta($bookingId, '_pwt_travel_date', $travelDate);
-        update_post_meta($bookingId, '_pwt_persons', $persons);
-        update_post_meta($bookingId, '_pwt_package_id', $packageId);
-        update_post_meta($bookingId, '_pwt_message', $message);
-
-        $estimate = [];
-        if ($packageId) {
-            $estimate = Pricing::calculateEstimate($packageId, $persons, $travelDate);
-            update_post_meta($bookingId, '_pwt_estimated_total', $estimate['estimated_total'] ?? 0);
-            update_post_meta($bookingId, '_pwt_estimate_season', $estimate['season_label'] ?? '');
+        if (!$result['success']) {
+            return new \WP_REST_Response(['message' => $result['message'] ?? __('Unable to create booking.', 'wildtours-plugin')], 422);
         }
 
         return new \WP_REST_Response([
-            'booking_id' => $bookingId,
-            'estimate' => $estimate,
+            'booking_id' => $result['booking_id'],
+            'payment_url' => $result['payment_url'] ?? '',
+            'payment_advance_amount' => $result['payment_advance_amount'] ?? 0,
         ], 201);
     }
 

@@ -10,15 +10,19 @@ final class AvailabilityRepository
     {
         global $wpdb;
         $table = Schema::tables()['availability'];
-        return false !== $wpdb->replace($table, [
-            'resource_type' => sanitize_key($resourceType),
-            'resource_id' => $resourceId,
-            'service_date' => sanitize_text_field($date),
-            'capacity' => max(0, $capacity),
-            'reserved' => max(0, $reserved),
-            'blocked' => max(0, $blocked),
-            'status' => sanitize_key($status),
-        ]);
+        $result = $wpdb->query($wpdb->prepare(
+            "INSERT INTO {$table} (resource_type, resource_id, service_date, capacity, reserved, blocked, status)
+             VALUES (%s, %d, %s, %d, %d, %d, %s)
+             ON DUPLICATE KEY UPDATE capacity = VALUES(capacity), status = VALUES(status)",
+            sanitize_key($resourceType),
+            $resourceId,
+            sanitize_text_field($date),
+            max(0, $capacity),
+            max(0, $reserved),
+            max(0, $blocked),
+            sanitize_key($status)
+        ));
+        return $result !== false;
     }
 
     public function get(int $resourceId, string $resourceType, string $date): array
@@ -50,14 +54,31 @@ final class AvailabilityRepository
         global $wpdb;
         $table = Schema::tables()['availability'];
         $quantity = max(1, $quantity);
+        $type = sanitize_key($resourceType);
         $result = $wpdb->query($wpdb->prepare(
             "UPDATE {$table}
              SET reserved = reserved + %d
              WHERE resource_type=%s AND resource_id=%d AND service_date=%s
              AND status='open' AND (capacity - reserved - blocked) >= %d",
-            $quantity, sanitize_key($resourceType), $resourceId, sanitize_text_field($date), $quantity
+            $quantity, $type, $resourceId, sanitize_text_field($date), $quantity
         ));
-        return $result === 1;
+        if ($result === 1) {
+            return true;
+        }
+
+        // No row was updated. If the row exists, capacity is exhausted.
+        if ($this->get($resourceId, $resourceType, $date)) {
+            return false;
+        }
+
+        // Missing row: provision capacity for this reservation so that a
+        // booking that passed check() can always be confirmed.
+        $inserted = $wpdb->query($wpdb->prepare(
+            "INSERT INTO {$table} (resource_type, resource_id, service_date, capacity, reserved, blocked, status)
+             VALUES (%s, %d, %s, %d, %d, %d, %s)",
+            $type, $resourceId, sanitize_text_field($date), $quantity, $quantity, 0, 'open'
+        ));
+        return $inserted !== false;
     }
 
     public function release(int $resourceId, string $resourceType, string $date, int $quantity = 1): bool

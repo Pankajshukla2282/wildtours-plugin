@@ -62,10 +62,10 @@ final class ReportService
         $items = Schema::tables()['items'];
         $bookings = Schema::tables()['bookings'];
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT bi.item_type, bi.item_id, SUM(bi.quantity) AS quantity, COALESCE(SUM(bi.total),0) AS value
+            "SELECT bi.item_type, bi.object_id AS item_id, SUM(bi.quantity) AS quantity, COALESCE(SUM(bi.total),0) AS value
              FROM {$items} bi INNER JOIN {$bookings} b ON b.id=bi.booking_id
              WHERE b.created_at BETWEEN %s AND %s
-             GROUP BY bi.item_type, bi.item_id ORDER BY value DESC LIMIT 20",
+             GROUP BY bi.item_type, bi.object_id ORDER BY value DESC LIMIT 20",
             sanitize_text_field($from).' 00:00:00',
             sanitize_text_field($to).' 23:59:59'
         ), ARRAY_A) ?: [];

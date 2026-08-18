@@ -55,7 +55,7 @@ class PaymentManager
     {
         $posts = get_posts([
             'post_type' => 'pwt_booking',
-            'post_status' => 'publish',
+            'post_status' => 'any',
             'posts_per_page' => 1,
             'fields' => 'ids',
             'meta_query' => [[

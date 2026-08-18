@@ -15,7 +15,7 @@ final class InventoryServiceProvider extends ServiceProvider
     }
     public function boot(): void
     {
-        add_action('pwt_cleanup_inventory_holds', [$this->make(HoldRepository::class), 'expire']);
+        add_action('pwt_cleanup_inventory_holds', [$this->make(HoldService::class), 'expireExpired']);
         if (!wp_next_scheduled('pwt_cleanup_inventory_holds')) {
             wp_schedule_event(time() + 300, 'hourly', 'pwt_cleanup_inventory_holds');
         }

@@ -14,7 +14,7 @@ final class BookingRepository
 
             'post_type' => 'pwt_booking',
 
-            'post_status' => 'publish',
+            'post_status' => 'private',
 
             'post_title' => sprintf(
                 '%s - %s',

@@ -13,6 +13,7 @@ final class PaymentRepository
         $wpdb->insert(Schema::tables()['payments'], [
             'booking_id' => absint($data['booking_id'] ?? 0),
             'gateway' => sanitize_key((string)($data['provider'] ?? $data['gateway'] ?? 'manual')),
+            'transaction_type' => sanitize_key((string)($data['transaction_type'] ?? 'payment')),
             'transaction_id' => sanitize_text_field((string)($data['provider_payment_id'] ?? $data['transaction_id'] ?? '')) ?: null,
             'status' => sanitize_key((string)($data['status'] ?? 'pending')),
             'amount' => max(0, (float)($data['amount'] ?? 0)),

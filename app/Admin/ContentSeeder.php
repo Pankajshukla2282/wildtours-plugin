@@ -119,19 +119,38 @@ final class ContentSeeder
             ],
         ];
 
+        $seasonMeta = [
+            'Peak (Nov-Feb)' => ['start' => 11, 'end' => 2],
+            'Shoulder (Mar-Jun)' => ['start' => 3, 'end' => 6],
+            'Monsoon (Jul-Oct)' => ['start' => 7, 'end' => 10],
+        ];
+
         foreach ($taxonomyMap as $taxonomy => $terms) {
             if (!taxonomy_exists($taxonomy)) {
                 continue;
             }
 
             foreach ($terms as $termName) {
-                if (term_exists($termName, $taxonomy)) {
-                    continue;
+                $existing = term_exists($termName, $taxonomy);
+                $termId = 0;
+
+                if (is_array($existing)) {
+                    $termId = (int) $existing['term_id'];
+                } else {
+                    $created = wp_insert_term($termName, $taxonomy);
+                    if (!is_wp_error($created)) {
+                        $termId = (int) $created['term_id'];
+                        ++$createdTerms;
+                    }
                 }
 
-                $created = wp_insert_term($termName, $taxonomy);
-                if (!is_wp_error($created)) {
-                    ++$createdTerms;
+                if (
+                    $taxonomy === 'pwt_season'
+                    && $termId > 0
+                    && isset($seasonMeta[$termName])
+                ) {
+                    update_term_meta($termId, 'season_start', (string) $seasonMeta[$termName]['start']);
+                    update_term_meta($termId, 'season_end', (string) $seasonMeta[$termName]['end']);
                 }
             }
         }

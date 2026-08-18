@@ -5,7 +5,7 @@ defined('ABSPATH') || exit;
 
 final class Schema
 {
-    public const VERSION = '2.2.1';
+    public const VERSION = '2.3.0';
 
     public static function tables(): array
     {
@@ -17,6 +17,7 @@ final class Schema
             'availability' => $wpdb->prefix . 'pwt_availability',
             'rates'        => $wpdb->prefix . 'pwt_rates',
             'payments'     => $wpdb->prefix . 'pwt_payments',
+            'holds'        => $wpdb->prefix . 'pwt_inventory_holds',
         ];
     }
 
@@ -132,6 +133,7 @@ final class Schema
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             booking_id BIGINT UNSIGNED NOT NULL,
             gateway VARCHAR(40) NOT NULL,
+            transaction_type VARCHAR(20) NOT NULL DEFAULT 'payment',
             transaction_id VARCHAR(190) NULL,
             status VARCHAR(30) NOT NULL DEFAULT 'pending',
             amount DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -144,7 +146,25 @@ final class Schema
             PRIMARY KEY (id),
             KEY booking_id (booking_id),
             KEY transaction_id (transaction_id),
-            KEY status (status)
+            KEY status (status),
+            KEY transaction_type (transaction_type)
+        ) $c;";
+
+        $sql[] = "CREATE TABLE {$t['holds']} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            booking_id BIGINT UNSIGNED NOT NULL,
+            resource_id BIGINT UNSIGNED NOT NULL,
+            resource_type VARCHAR(40) NOT NULL,
+            service_date DATE NOT NULL,
+            quantity INT UNSIGNED NOT NULL DEFAULT 1,
+            status VARCHAR(20) NOT NULL DEFAULT 'active',
+            expires_at DATETIME NOT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY booking_id (booking_id),
+            KEY resource_day (resource_type, resource_id, service_date),
+            KEY status_expiry (status, expires_at)
         ) $c;";
 
         foreach ($sql as $statement) {

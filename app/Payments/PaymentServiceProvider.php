@@ -15,5 +15,6 @@ final class PaymentServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->make(WebhookController::class)->register();
+        $this->make(PaymentManager::class)->register();
     }
 }

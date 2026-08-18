@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Panna Wild Tour
  * Description: Core content, booking, availability, pricing, inventory, payments and integrations for Panna Wild Tour.
- * Version: 2.2.10
+ * Version: 2.3.0
  * Author: Panna Wild Tour
  * Author URI: https://www.pannawildtour.com
  * Requires at least: 6.7
@@ -13,11 +13,39 @@
 
 defined('ABSPATH') || exit;
 
-define('PWT_VERSION', '2.2.9');
+define('PWT_VERSION', '2.3.0');
 define('PWT_PLUGIN_FILE', __FILE__);
 define('PWT_PLUGIN_BASENAME', plugin_basename(__FILE__));
+define('PWT_PLUGIN_PATH', trailingslashit(plugin_dir_path(__FILE__)));
+define('PWT_PLUGIN_URL', trailingslashit(plugin_dir_url(__FILE__)));
 
-require_once plugin_dir_path(__FILE__) . 'app/Core/Autoloader.php';
+/** Fail safely instead of causing a fatal error on unsupported hosts. */
+function pwt_environment_is_supported(): bool
+{
+    global $wp_version;
+
+    return version_compare(PHP_VERSION, '8.2.0', '>=')
+        && isset($wp_version)
+        && version_compare((string) $wp_version, '6.7', '>=');
+}
+
+function pwt_render_environment_notice(): void
+{
+    if (!current_user_can('activate_plugins')) {
+        return;
+    }
+
+    echo '<div class="notice notice-error"><p>'
+        . esc_html__('Panna Wild Tour requires WordPress 6.7+ and PHP 8.2+. The plugin was not booted.', 'wildtours-plugin')
+        . '</p></div>';
+}
+
+if (!pwt_environment_is_supported()) {
+    add_action('admin_notices', 'pwt_render_environment_notice');
+    return;
+}
+
+require_once PWT_PLUGIN_PATH . 'app/Core/Autoloader.php';
 
 PWT\Core\Autoloader::register();
 PWT\Core\Plugin::boot();
