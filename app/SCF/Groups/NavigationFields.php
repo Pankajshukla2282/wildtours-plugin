@@ -168,8 +168,7 @@ final class NavigationFields extends FieldGroup
             'menu_title' => __('Navigation', 'wildtours-plugin'),
             'menu_slug' => 'pwt-navigation',
             'capability' => 'manage_options',
-            'position' => 26.9,
-            'icon_url' => 'dashicons-menu',
+            'parent_slug' => 'pwt-dashboard',
             'redirect' => false,
         ];
 
