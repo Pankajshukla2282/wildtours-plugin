@@ -6,6 +6,16 @@ use PWT\Core\Database\Schema;
 
 final class CustomerRepository
 {
+    public function find(int $id): array
+    {
+        global $wpdb;
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM " . Schema::tables()['customers'] . " WHERE id=%d",
+            absint($id)
+        ), ARRAY_A);
+        return $row ?: [];
+    }
+
     public function findOrCreate(array $data): int
     {
         global $wpdb;

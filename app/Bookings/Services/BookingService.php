@@ -17,7 +17,7 @@ final class BookingService
     public function __construct(
         private readonly BookingRepository $repository,
         private readonly BookingValidator $validator,
-        private readonly EmailService $emailService,
+        private readonly NotificationService $notifications,
         private readonly BookingDataService $bookingDataService
     ) {
     }
@@ -47,6 +47,7 @@ final class BookingService
         $booking = $validation['data'];
 
         // New normalized booking model; legacy post remains for backward compatibility.
+        $normalizedBookingId = 0;
         try {
             $normalizedBookingId = $this->bookingDataService->syncLegacyBooking((int) $bookingId, $booking);
             update_post_meta($bookingId, '_pwt_normalized_booking_id', $normalizedBookingId);
@@ -88,15 +89,10 @@ final class BookingService
             $emailData['payment_link'] = $payment['payment_url'];
         }
 
-        $this->emailService->sendAdminNotification(
-            $bookingId,
-            $emailData
-        );
-
-        $this->emailService->sendCustomerConfirmation(
-            $bookingId,
-            $emailData
-        );
+        if ($normalizedBookingId) {
+            $this->notifications->enquiry($normalizedBookingId, $emailData);
+            $this->notifications->acknowledgement($normalizedBookingId, $emailData);
+        }
 
         do_action(
             'pwt/booking/created',

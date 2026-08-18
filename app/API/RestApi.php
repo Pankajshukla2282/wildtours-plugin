@@ -3,13 +3,16 @@
 namespace PWT\API;
 
 use PWT\Bookings\Services\BookingService;
+use PWT\Documents\DocumentService;
 
 defined('ABSPATH') || exit;
 
 class RestApi
 {
-    public function __construct(private readonly BookingService $bookingService)
-    {
+    public function __construct(
+        private readonly BookingService $bookingService,
+        private readonly DocumentService $documents
+    ) {
     }
 
     public function register(): void
@@ -37,6 +40,15 @@ class RestApi
                 'persons' => ['required' => true],
             ],
         ]);
+
+        foreach (['voucher', 'invoice'] as $document) {
+            register_rest_route('pwt/v1', '/bookings/(?P<id>\d+)/' . $document, [
+                'methods' => 'GET',
+                'callback' => [$this, 'document'],
+                'permission_callback' => [$this, 'canManageBookings'],
+                'args' => ['id' => ['required' => true]],
+            ]);
+        }
     }
 
     public function canReadPublicData(
@@ -80,6 +92,38 @@ class RestApi
             __('Unauthorized booking API request.', 'wildtours-plugin'),
             ['status' => 403]
         );
+    }
+
+    public function canManageBookings(\WP_REST_Request $request): bool|\WP_Error
+    {
+        return is_user_logged_in() && current_user_can('edit_posts')
+            ? true
+            : new \WP_Error(
+                'pwt_rest_forbidden',
+                __('Unauthorized document request.', 'wildtours-plugin'),
+                ['status' => 403]
+            );
+    }
+
+    public function document(\WP_REST_Request $request): \WP_REST_Response
+    {
+        $id = absint($request['id']);
+        $type = strpos($request->get_route(), 'voucher') !== false ? 'voucher' : 'invoice';
+
+        $document = $type === 'invoice'
+            ? $this->documents->invoice($id)
+            : $this->documents->voucher($id);
+
+        if (empty($document['booking_number'])) {
+            return new \WP_REST_Response(['message' => __('Booking not found.', 'wildtours-plugin')], 404);
+        }
+
+        return new \WP_REST_Response([
+            'type' => $type,
+            'booking_id' => $id,
+            'booking_number' => $document['booking_number'],
+            'html' => $document['html'],
+        ], 200);
     }
 
     public function packages(\WP_REST_Request $request): \WP_REST_Response

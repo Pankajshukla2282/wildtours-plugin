@@ -6,6 +6,7 @@ defined('ABSPATH') || exit;
 use PWT\Core\ServiceProvider;
 use PWT\Bookings\Controllers\BookingController;
 use PWT\Bookings\Repositories\BookingRepository;
+use PWT\Bookings\Services\NotificationService;
 use PWT\Availability\AvailabilityRepository;
 use PWT\Pricing\PricingService;
 
@@ -20,5 +21,10 @@ final class BookingServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->make(BookingController::class)->register();
+
+        $notifications = $this->make(NotificationService::class);
+        add_action('pwt/booking/confirmed', [$notifications, 'confirmation'], 10, 1);
+        add_action('pwt/booking/paid', [$notifications, 'confirmation'], 10, 1);
+        add_action('pwt/booking/cancelled', [$notifications, 'cancellation'], 10, 1);
     }
 }

@@ -29,4 +29,10 @@ final class Settings
             $value
         );
     }
+
+    public static function advancePercent(): int
+    {
+        $settings = (array) get_option('pwt_settings', []);
+        return max(1, min(100, absint($settings['payment_advance_percent'] ?? 30)));
+    }
 }

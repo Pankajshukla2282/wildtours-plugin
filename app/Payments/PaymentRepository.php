@@ -4,9 +4,14 @@ namespace PWT\Payments;
 defined('ABSPATH') || exit;
 
 use PWT\Core\Database\Schema;
+use PWT\Logging\AuditLog;
 
 final class PaymentRepository
 {
+    public function __construct(private readonly AuditLog $audit)
+    {
+    }
+
     public function create(array $data): int
     {
         global $wpdb;
@@ -24,7 +29,20 @@ final class PaymentRepository
             'created_at' => current_time('mysql'),
             'updated_at' => current_time('mysql'),
         ]);
-        return (int)$wpdb->insert_id;
+        $id = (int)$wpdb->insert_id;
+
+        if ($id) {
+            $this->audit->record('payment', $id, 'payment.created', [
+                'to' => [
+                    'booking_id' => absint($data['booking_id'] ?? 0),
+                    'type' => sanitize_key((string)($data['transaction_type'] ?? 'payment')),
+                    'amount' => (float)($data['amount'] ?? 0),
+                    'status' => sanitize_key((string)($data['status'] ?? 'pending')),
+                ],
+            ]);
+        }
+
+        return $id;
     }
 
     public function byIdempotencyKey(string $key): ?array
@@ -39,12 +57,43 @@ final class PaymentRepository
     public function markPaid(int $id, array $gatewayResponse = []): bool
     {
         global $wpdb;
-        return false !== $wpdb->update(
+        $row = $this->byId($id);
+        $updated = false !== $wpdb->update(
             Schema::tables()['payments'],
             ['status'=>'paid','meta'=>wp_json_encode($gatewayResponse),'paid_at'=>current_time('mysql'),'updated_at'=>current_time('mysql')],
             ['id'=>$id],
             ['%s','%s','%s','%s'],
             ['%d']
         );
+
+        if ($updated && $row && ($row['status'] ?? '') !== 'paid') {
+            $this->audit->record('payment', $id, 'payment.paid', [
+                'from' => ['status' => $row['status']],
+                'to' => ['status' => 'paid'],
+                'actor' => $row['gateway'] ?? '',
+            ]);
+        }
+
+        return $updated;
+    }
+
+    public function byId(int $id): ?array
+    {
+        global $wpdb;
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM " . Schema::tables()['payments'] . " WHERE id=%d", $id
+        ), ARRAY_A);
+        return $row ?: null;
+    }
+
+    public function forBooking(int $bookingId, string $type = 'payment'): array
+    {
+        global $wpdb;
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM " . Schema::tables()['payments'] . "
+             WHERE booking_id=%d AND transaction_type=%s AND status='paid' ORDER BY id ASC",
+            $bookingId,
+            sanitize_key($type)
+        ), ARRAY_A) ?: [];
     }
 }

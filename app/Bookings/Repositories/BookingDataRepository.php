@@ -3,9 +3,14 @@ declare(strict_types=1);
 namespace PWT\Bookings\Repositories;
 defined('ABSPATH') || exit;
 use PWT\Core\Database\Schema;
+use PWT\Logging\AuditLog;
 
 final class BookingDataRepository
 {
+    public function __construct(private readonly AuditLog $audit)
+    {
+    }
+
     public function create(array $data): int
     {
         global $wpdb;
@@ -33,7 +38,15 @@ final class BookingDataRepository
             'created_at' => $now,
             'updated_at' => $now,
         ]);
-        return (int)$wpdb->insert_id;
+        $id = (int)$wpdb->insert_id;
+
+        if ($id) {
+            $this->audit->record('booking', $id, 'booking.created', [
+                'to' => ['status' => sanitize_key((string)($data['status'] ?? 'pending'))],
+            ]);
+        }
+
+        return $id;
     }
 
     public function find(int $id): array
@@ -46,12 +59,23 @@ final class BookingDataRepository
     public function updateStatus(int $id, string $status): bool
     {
         global $wpdb;
-        return false !== $wpdb->update(
+        $status = sanitize_key($status);
+        $current = (string)($this->find($id)['status'] ?? '');
+        $updated = false !== $wpdb->update(
             Schema::tables()['bookings'],
-            ['status' => sanitize_key($status), 'updated_at' => current_time('mysql')],
+            ['status' => $status, 'updated_at' => current_time('mysql')],
             ['id' => $id],
             ['%s','%s'],
             ['%d']
         );
+
+        if ($updated && $current !== $status) {
+            $this->audit->record('booking', $id, 'booking.status', [
+                'from' => ['status' => $current],
+                'to' => ['status' => $status],
+            ]);
+        }
+
+        return $updated;
     }
 }

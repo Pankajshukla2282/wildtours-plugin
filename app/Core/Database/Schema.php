@@ -5,7 +5,7 @@ defined('ABSPATH') || exit;
 
 final class Schema
 {
-    public const VERSION = '2.3.0';
+    public const VERSION = '2.4.0';
 
     public static function tables(): array
     {
@@ -18,6 +18,8 @@ final class Schema
             'rates'        => $wpdb->prefix . 'pwt_rates',
             'payments'     => $wpdb->prefix . 'pwt_payments',
             'holds'        => $wpdb->prefix . 'pwt_inventory_holds',
+            'audit'        => $wpdb->prefix . 'pwt_audit_log',
+            'travelers'    => $wpdb->prefix . 'pwt_travelers',
         ];
     }
 
@@ -165,6 +167,39 @@ final class Schema
             KEY booking_id (booking_id),
             KEY resource_day (resource_type, resource_id, service_date),
             KEY status_expiry (status, expires_at)
+        ) $c;";
+
+        $sql[] = "CREATE TABLE {$t['audit']} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            entity_type VARCHAR(40) NOT NULL,
+            entity_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+            action VARCHAR(40) NOT NULL,
+            actor VARCHAR(190) NULL,
+            from_value LONGTEXT NULL,
+            to_value LONGTEXT NULL,
+            notes TEXT NULL,
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY entity (entity_type, entity_id),
+            KEY action (action),
+            KEY created_at (created_at)
+        ) $c;";
+
+        $sql[] = "CREATE TABLE {$t['travelers']} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            booking_id BIGINT UNSIGNED NOT NULL,
+            first_name VARCHAR(100) NOT NULL,
+            last_name VARCHAR(100) NULL,
+            date_of_birth DATE NULL,
+            nationality VARCHAR(100) NULL,
+            passport_number VARCHAR(100) NULL,
+            email VARCHAR(190) NULL,
+            phone VARCHAR(50) NULL,
+            meta LONGTEXT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY booking_id (booking_id)
         ) $c;";
 
         foreach ($sql as $statement) {

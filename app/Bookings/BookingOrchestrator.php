@@ -9,7 +9,9 @@ use PWT\Availability\AvailabilityRepository;
 use PWT\Availability\HoldService;
 use PWT\Core\Database\Transaction;
 use PWT\Customers\CustomerRepository;
+use PWT\Customers\TravelerRepository;
 use PWT\Pricing\PricingService;
+use PWT\Settings\Settings;
 use WP_Error;
 
 final class BookingOrchestrator
@@ -21,7 +23,8 @@ final class BookingOrchestrator
         private readonly AvailabilityRepository $availability,
         private readonly PricingService $pricing,
         private readonly HoldService $holds,
-        private readonly CustomerRepository $customers
+        private readonly CustomerRepository $customers,
+        private readonly TravelerRepository $travelers
     ) {}
 
     public function create(array $request): int|WP_Error
@@ -95,6 +98,8 @@ final class BookingOrchestrator
         }
 
         $bookingId = Transaction::run(function () use ($legacyId, $customerId, $request, $prepared, $total, $travelStart, $travelEnd, $persons, $currency, $message): int|WP_Error {
+            $depositDue = round(($total * Settings::advancePercent()) / 100, 2);
+
             $bookingId = $this->bookingsData->create([
                 'legacy_post_id' => $legacyId,
                 'customer_id' => $customerId,
@@ -106,6 +111,7 @@ final class BookingOrchestrator
                 'currency' => $currency,
                 'subtotal' => $total,
                 'total' => $total,
+                'deposit_due' => $depositDue,
                 'notes' => $message,
                 'source' => 'api',
             ]);
@@ -137,6 +143,13 @@ final class BookingOrchestrator
                 return new WP_Error('pwt_hold_failed', __('Inventory could not be reserved.', 'wildtours-plugin'));
             }
 
+            foreach ((array)($request['travelers'] ?? []) as $traveler) {
+                if (empty($traveler['first_name'])) {
+                    return new WP_Error('pwt_traveler_invalid', __('Each traveler requires a first name.', 'wildtours-plugin'));
+                }
+                $this->travelers->add($bookingId, $traveler);
+            }
+
             return $bookingId;
         });
 
@@ -157,12 +170,22 @@ final class BookingOrchestrator
             return new WP_Error('pwt_booking_not_found', __('Booking not found.', 'wildtours-plugin'));
         }
 
+        $current = (string)($booking['status'] ?? 'pending');
+        if ($current === BookingStatus::CANCELLED || $current === BookingStatus::REFUNDED) {
+            return new WP_Error('pwt_booking_not_confirmable', __('This booking cannot be confirmed.', 'wildtours-plugin'));
+        }
+
+        $finalStatus = $current === BookingStatus::PAID ? BookingStatus::PAID : BookingStatus::CONFIRMED;
+        if ($current !== $finalStatus && !BookingStatus::canTransition($current, $finalStatus)) {
+            return new WP_Error('pwt_booking_not_confirmable', __('This booking cannot be confirmed.', 'wildtours-plugin'));
+        }
+
         $items = $this->items->byBooking($bookingId);
         if (!$items) {
             return new WP_Error('pwt_booking_not_found', __('Booking not found.', 'wildtours-plugin'));
         }
 
-        return Transaction::run(function () use ($booking, $bookingId, $items): bool|WP_Error {
+        return Transaction::run(function () use ($booking, $bookingId, $items, $current, $finalStatus): bool|WP_Error {
             $this->holds->releaseBooking($bookingId);
 
             foreach ($items as $item) {
@@ -176,11 +199,15 @@ final class BookingOrchestrator
                 }
             }
 
-            if (!$this->bookingsData->updateStatus($bookingId, 'confirmed')) {
+            if ($current !== $finalStatus && !$this->bookingsData->updateStatus($bookingId, $finalStatus)) {
                 return new WP_Error('pwt_booking_status_failed', __('Unable to confirm booking.', 'wildtours-plugin'));
             }
 
-            $this->syncLegacyStatus((int)($booking['legacy_post_id'] ?? 0), 'confirmed');
+            $this->syncLegacyStatus((int)($booking['legacy_post_id'] ?? 0), $finalStatus);
+
+            if ($finalStatus === BookingStatus::CONFIRMED) {
+                do_action('pwt/booking/confirmed', $bookingId);
+            }
 
             return true;
         });
@@ -193,14 +220,23 @@ final class BookingOrchestrator
             return new WP_Error('pwt_booking_not_found', __('Booking not found.', 'wildtours-plugin'));
         }
 
+        $current = (string)($booking['status'] ?? '');
+        if ($current === BookingStatus::CANCELLED) {
+            return true;
+        }
+        if ($current === BookingStatus::REFUNDED) {
+            return new WP_Error('pwt_booking_not_cancellable', __('Refunded bookings cannot be cancelled.', 'wildtours-plugin'));
+        }
+        if (!BookingStatus::canTransition($current, BookingStatus::CANCELLED)) {
+            return new WP_Error('pwt_booking_not_cancellable', __('This booking cannot be cancelled.', 'wildtours-plugin'));
+        }
+
         $items = $this->items->byBooking($bookingId);
 
-        return Transaction::run(function () use ($booking, $bookingId, $items): bool|WP_Error {
-            $status = (string)($booking['status'] ?? '');
-
+        return Transaction::run(function () use ($booking, $bookingId, $items, $current): bool|WP_Error {
             $this->holds->releaseBooking($bookingId);
 
-            if (in_array($status, ['confirmed', 'paid'], true)) {
+            if (in_array($current, [BookingStatus::CONFIRMED, BookingStatus::PAID], true)) {
                 foreach ($items as $item) {
                     $resourceId = absint($item['object_id'] ?? 0);
                     if ($resourceId) {
@@ -214,11 +250,55 @@ final class BookingOrchestrator
                 }
             }
 
-            if (!$this->bookingsData->updateStatus($bookingId, 'cancelled')) {
+            if (!$this->bookingsData->updateStatus($bookingId, BookingStatus::CANCELLED)) {
                 return new WP_Error('pwt_booking_status_failed', __('Unable to cancel booking.', 'wildtours-plugin'));
             }
 
-            $this->syncLegacyStatus((int)($booking['legacy_post_id'] ?? 0), 'cancelled');
+            $this->syncLegacyStatus((int)($booking['legacy_post_id'] ?? 0), BookingStatus::CANCELLED);
+
+            do_action('pwt/booking/cancelled', $bookingId);
+
+            return true;
+        });
+    }
+
+    public function refund(int $bookingId): bool|WP_Error
+    {
+        $booking = $this->bookingsData->find($bookingId);
+        if (!$booking) {
+            return new WP_Error('pwt_booking_not_found', __('Booking not found.', 'wildtours-plugin'));
+        }
+
+        $current = (string)($booking['status'] ?? '');
+        if ($current === BookingStatus::REFUNDED) {
+            return true;
+        }
+        if (!BookingStatus::canTransition($current, BookingStatus::REFUNDED)) {
+            return new WP_Error('pwt_booking_not_refundable', __('This booking cannot be refunded.', 'wildtours-plugin'));
+        }
+
+        $items = $this->items->byBooking($bookingId);
+
+        return Transaction::run(function () use ($booking, $bookingId, $items): bool|WP_Error {
+            $this->holds->releaseBooking($bookingId);
+
+            foreach ($items as $item) {
+                $resourceId = absint($item['object_id'] ?? 0);
+                if ($resourceId) {
+                    $this->availability->release(
+                        $resourceId,
+                        (string)$item['item_type'],
+                        (string)$item['start_date'],
+                        (int)$item['quantity']
+                    );
+                }
+            }
+
+            if (!$this->bookingsData->updateStatus($bookingId, BookingStatus::REFUNDED)) {
+                return new WP_Error('pwt_booking_status_failed', __('Unable to refund booking.', 'wildtours-plugin'));
+            }
+
+            $this->syncLegacyStatus((int)($booking['legacy_post_id'] ?? 0), BookingStatus::REFUNDED);
 
             return true;
         });
