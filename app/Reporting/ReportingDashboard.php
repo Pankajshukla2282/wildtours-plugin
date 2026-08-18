@@ -7,6 +7,11 @@ final class ReportingDashboard
 {
     public function register(): void
     {
+        add_action('admin_menu', [$this, 'menus'], 30);
+    }
+
+    public function menus(): void
+    {
         add_submenu_page('pwt-dashboard', __('Reports','wildtours-plugin'), __('Reports','wildtours-plugin'), 'manage_options', 'pwt-reports', [$this,'render']);
     }
 
