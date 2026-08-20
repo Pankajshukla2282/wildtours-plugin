@@ -13,7 +13,7 @@
 
 defined('ABSPATH') || exit;
 
-define('PWT_VERSION', '2.5.0');
+define('PWT_VERSION', '2.5.2');
 define('PWT_PLUGIN_FILE', __FILE__);
 define('PWT_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('PWT_PLUGIN_PATH', trailingslashit(plugin_dir_path(__FILE__)));

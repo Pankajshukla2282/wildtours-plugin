@@ -76,7 +76,30 @@ final class Application
      */
     public function boot(): void
     {
+        add_filter('user_has_cap', [self::class, 'grantOperationsCapability'], 10, 1);
         add_action('init', [$this, 'init'], 10);
+    }
+
+    /**
+     * Grant the operations capability to any user with manage_options (admins).
+     *
+     * The capability is also added to the administrator role on activation, but
+     * plugin upgrades/reinstalls do not re-run activation, so the runtime grant
+     * keeps the Operations, Pricing, Customers and Availability admin pages
+     * visible for admins regardless of activation history. The dedicated
+     * pwt_staff role still relies on its explicit pwt_manage_operations cap.
+     *
+     * @param array<string, bool> $allcaps
+     *
+     * @return array<string, bool>
+     */
+    public static function grantOperationsCapability(array $allcaps): array
+    {
+        if (!empty($allcaps['manage_options'])) {
+            $allcaps['pwt_manage_operations'] = true;
+        }
+
+        return $allcaps;
     }
 
     /**
