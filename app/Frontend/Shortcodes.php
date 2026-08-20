@@ -59,6 +59,7 @@ class Shortcodes
             'post_type' => 'pwt_package',
             'post_status' => 'publish',
             'posts_per_page' => 6,
+            'no_found_rows' => true,
         ];
 
         if (!empty($featuredIds)) {
@@ -83,6 +84,7 @@ class Shortcodes
             'post_type' => 'pwt_safari',
             'post_status' => 'publish',
             'posts_per_page' => 6,
+            'no_found_rows' => true,
         ]);
 
         return $this->renderCardsSection(
@@ -99,6 +101,7 @@ class Shortcodes
             'post_type' => 'pwt_destination',
             'post_status' => 'publish',
             'posts_per_page' => 6,
+            'no_found_rows' => true,
         ]);
 
         return $this->renderCardsSection(
@@ -115,6 +118,7 @@ class Shortcodes
             'post_type' => 'pwt_testimonial',
             'post_status' => 'publish',
             'posts_per_page' => 4,
+            'no_found_rows' => true,
         ]);
 
         ob_start();
@@ -156,6 +160,7 @@ class Shortcodes
             'post_type' => 'pwt_faq',
             'post_status' => 'publish',
             'posts_per_page' => 10,
+            'no_found_rows' => true,
         ]);
 
         ob_start();
@@ -197,6 +202,7 @@ class Shortcodes
             'post_type' => 'pwt_review',
             'post_status' => 'publish',
             'posts_per_page' => 6,
+            'no_found_rows' => true,
         ]);
 
         ob_start();
