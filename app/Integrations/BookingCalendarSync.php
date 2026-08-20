@@ -177,7 +177,7 @@ final class BookingCalendarSync
     {
         $data = [];
         if ($type !== '') {
-            $decoded = @unserialize($type);
+            $decoded = @unserialize($type, ['allowed_classes' => false]);
             if (is_array($decoded)) {
                 $data = $decoded;
             }
