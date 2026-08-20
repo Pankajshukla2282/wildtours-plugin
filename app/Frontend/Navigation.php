@@ -87,7 +87,7 @@ final class Navigation
     {
         $currentPath = untrailingslashit((string) wp_parse_url((string) add_query_arg([]), PHP_URL_PATH)) ?: '/';
 
-        [$html] = self::renderLevel($items, 'primary-menu', $currentPath);
+        [$html] = self::renderLevel($items, 'primary-menu', $currentPath, 'primary-menu');
 
         return $html;
     }
@@ -97,9 +97,12 @@ final class Navigation
      *
      * @return array{0:string, 1:bool} [html, hasCurrentItem]
      */
-    private static function renderLevel(array $items, string $class, string $currentPath): array
+    private static function renderLevel(array $items, string $class, string $currentPath, string $id = ''): array
     {
-        $html = '<ul' . ($class !== '' ? ' class="' . esc_attr($class) . '"' : '') . '>';
+        $html = '<ul'
+            . ($class !== '' ? ' class="' . esc_attr($class) . '"' : '')
+            . ($id !== '' ? ' id="' . esc_attr($id) . '"' : '')
+            . '>';
         $hasCurrent = false;
 
         foreach ($items as $item) {
