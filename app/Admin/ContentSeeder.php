@@ -90,7 +90,9 @@ final class ContentSeeder
             'pwt_safari_zone' => [
                 'Madla Gate Core Zone',
                 'Hinauta Gate Core Zone',
+                'Akola Gate Core Zone',
                 'Akola Buffer Zone',
+                'Jhinna Buffer Zone',
             ],
             'pwt_vehicle_type' => [
                 'Open Gypsy (6 Seater)',
