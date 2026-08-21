@@ -28,6 +28,25 @@ final class BookingCalendarSync
     ) {
     }
 
+    /**
+     * Check if FluentBooking is active and return its hook names.
+     *
+     * @return array 'active' => bool, 'appointment_created' => string|false, 'appointment_updated' => string|false
+     */
+    public static function fluentBookingStatus(): array
+    {
+        $active = class_exists('fluentbooking') || function_exists('fluent_booking_get_appointments');
+
+        $appointmentCreated = $active ? 'fluent_booking_appointment_created' : false;
+        $appointmentUpdated = $active ? 'fluent_booking_appointment_updated' : false;
+
+        return [
+            'active' => $active,
+            'appointment_created' => $appointmentCreated,
+            'appointment_updated' => $appointmentUpdated,
+        ];
+    }
+
     public function detected(): bool
     {
         global $wpdb;

@@ -136,4 +136,41 @@ final class FluentForms
 
         return '';
     }
+
+    /**
+     * Route a Fluent Form submission to PWT customers or booking system.
+     *
+     * @param array $formData Full form submission data from Fluent Forms
+     * @return array 'routed' => bool, 'destination' => string
+     */
+    public static function routeSubmission(array $formData): array
+    {
+        $result = ['routed' => false, 'destination' => ''];
+
+        if (!self::isActive()) {
+            return $result;
+        }
+
+        $email = self::field($formData, 'email');
+        $firstName = self::field($formData, 'first_name');
+        $lastName = self::field($formData, 'last_name');
+        $phone = self::field($formData, 'phone');
+
+        if ($email !== '') {
+            // Route to customer repository for lead tracking
+            $customer = self::customers->findOrCreate([
+                'email' => $email,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'phone' => $phone,
+            ]);
+
+            $result['routed'] = true;
+            $result['destination'] = 'customer_' . $customer['id'];
+        }
+
+        // Could also route to FluentCRM here
+
+        return $result;
+    }
 }
