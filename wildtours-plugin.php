@@ -53,6 +53,31 @@ PWT\Core\Plugin::boot();
 register_activation_hook(__FILE__, [PWT\Core\Plugin::class, 'activate']);
 register_deactivation_hook(__FILE__, [PWT\Core\Plugin::class, 'deactivate']);
 
+add_filter('pwt_verify_payment_webhook', 'my_verify_payment_webhook', 10, 2);
+
+function my_verify_payment_webhook($status, $payment_id) {
+    // Verify the webhook signature/token
+    // Return true if valid, false otherwise
+    
+    // Example using a secret stored in options:
+    $secret = get_option('my_payment_webhook_secret');
+    $received_hmac = isset($_POST['hmac']) ? $_POST['hmac'] : '';
+    
+    if (!hash_equals($secret, $received_hmac)) {
+        return false; // Invalid signature
+    }
+    
+    // Update payment status in database
+    $payment = get_post($payment_id);
+    if ($payment) {
+        update_post_status($payment_id, 'publish', ['ID' => $payment_id]);
+    }
+    
+    return true;
+}
+
+/* Mark end of code block */
+
 add_filter('plugin_action_links_' . PWT_PLUGIN_BASENAME, static function (array $links): array {
     $custom = [
         '<a href="' . esc_url(admin_url('admin.php?page=pwt-settings')) . '">' . esc_html__('Settings', 'wildtours-plugin') . '</a>',
