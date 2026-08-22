@@ -26,17 +26,6 @@ final class AdminServiceProvider extends ServiceProvider
 
         (new Settings())->register();
 
-        // Register single Settings top-level menu with three tabs
-        add_menu_page(
-            __('Settings', 'wildtours-plugin'),
-            __('Settings', 'wildtours-plugin'),
-            'manage_options',
-            'pwt-settings',
-            [$this->make(Settings::class), 'renderSettingsPage'],
-            'dashicons-safari',
-            30
-        );
-
         (new ContentSeeder())->register();
     }
 }
