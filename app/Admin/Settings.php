@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PWT\Admin;
 
 defined('ABSPATH') || exit;
@@ -10,17 +12,35 @@ class Settings
     {
         add_action(
             'admin_init',
-            [$this, 'settings']
+            [$this, 'registerSettings']
         );
     }
 
-    public function settings(): void
+    /**
+     * Register all three settings sections.
+     */
+    public function registerSettings(): void
+    {
+        // --- General Settings ---
+        $this->registerGeneralSettings();
+
+        // --- Payments Settings ---
+        $this->registerPaymentsSettings();
+
+        // --- Availability Settings ---
+        $this->registerAvailabilitySettings();
+    }
+
+    /**
+     * Register General Settings section.
+     */
+    private function registerGeneralSettings(): void
     {
         register_setting(
-            'pwt_settings_group',
-            'pwt_settings',
+            'pwt_settings_general',
+            'pwt_settings_general',
             [
-                'sanitize_callback' => [$this, 'sanitize']
+                'sanitize_callback' => [$this, 'sanitizeGeneral'],
             ]
         );
 
@@ -28,267 +48,172 @@ class Settings
             'pwt_general',
             __('General Settings', 'wildtours-plugin'),
             '__return_false',
-            'pwt-settings'
+            'pwt-settings-general'
         );
 
-        add_settings_field(
-            'company_name',
-            __('Company Name', 'wildtours-plugin'),
-            [$this, 'renderTextField'],
-            'pwt-settings',
-            'pwt_general',
+        $this->addGeneralField('company_name', __('Company Name'), __('Panna Wild Tour'));
+        $this->addGeneralField('contact_phone', __('Contact Phone'), __('+91 90000 00000'));
+        $this->addGeneralField('contact_email', __('Contact Email'), __('hello@example.com'));
+        $this->addGeneralField('whatsapp_number', __('WhatsApp Number'), __('919000000000'));
+        $this->addGeneralField('company_address', __('Company Address'), __('Panna, Madhya Pradesh, India'));
+        $this->addGeneralField('booking_email', __('Booking Notification Email'), __('bookings@example.com'));
+        $this->addGeneralField('hero_title', __('Homepage Hero Title'), __('Explore Panna Tiger Reserve'));
+        $this->addGeneralField('hero_subtitle', __('Homepage Hero Subtitle'), __('Trusted safari planning, premium stays, and complete travel support.'));
+        $this->addGeneralField('featured_package_ids', __('Featured Package IDs (comma separated)'), __('660,668,675'));
+        $this->addGeneralField('google_analytics_id', __('Google Analytics ID'), __('G-XXXXXXXXXX'));
+    }
+
+    /**
+     * Register Payments Settings section.
+     */
+    private function registerPaymentsSettings(): void
+    {
+        register_setting(
+            'pwt_settings_payments',
+            'pwt_settings_payments',
             [
-                'key' => 'company_name',
-                'placeholder' => __('Panna Wild Tour', 'wildtours-plugin')
+                'sanitize_callback' => [$this, 'sanitizePayments'],
             ]
         );
 
-        add_settings_field(
-            'contact_phone',
-            __('Contact Phone', 'wildtours-plugin'),
-            [$this, 'renderTextField'],
-            'pwt-settings',
-            'pwt_general',
+        add_settings_section(
+            'pwt_payments',
+            __('Payment Settings', 'wildtours-plugin'),
+            '__return_false',
+            'pwt-settings-payments'
+        );
+
+        $this->addPaymentsField('payment_page_url', __('Payment Page URL'), __('https://example.com/payment/'));
+        $this->addPaymentsField('payment_upi_id', __('UPI ID'), __('business@upi'));
+        $this->addPaymentsField('payment_gateway', __('Payment Gateway Mode'), [
+            'manual' => __('Manual Reference (UPI/Bank)'),
+            'razorpay' => __('Razorpay (Hosted Redirect)'),
+            'cashfree' => __('Cashfree (Hosted Redirect)'),
+        ]);
+        $this->addPaymentsField('payment_gateway_checkout_url', __('Gateway Checkout URL'), __('https://payments.example.com/checkout'));
+        $this->addPaymentsField('payment_methods', __('Allowed Payment Methods (comma separated)'), __('upi,bank_transfer,cash'));
+        $this->addPaymentsField('payment_advance_percent', __('Advance Payment Percent'), __('30'));
+        $this->addPaymentsField('payment_instructions', __('Payment Instructions'), __('Share bank or UPI instructions for advance booking confirmation.'));
+    }
+
+    /**
+     * Register Availability Settings section.
+     */
+    private function registerAvailabilitySettings(): void
+    {
+        register_setting(
+            'pwt_settings_availability',
+            'pwt_settings_availability',
             [
-                'key' => 'contact_phone',
-                'placeholder' => __('+91 90000 00000', 'wildtours-plugin')
+                'sanitize_callback' => [$this, 'sanitizeAvailability'],
             ]
         );
 
-        add_settings_field(
-            'contact_email',
-            __('Contact Email', 'wildtours-plugin'),
-            [$this, 'renderEmailField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'contact_email',
-                'placeholder' => __('hello@example.com', 'wildtours-plugin')
-            ]
+        add_settings_section(
+            'pwt_availability',
+            __('Availability Settings', 'wildtours-plugin'),
+            '__return_false',
+            'pwt-settings-availability'
         );
 
-        add_settings_field(
-            'whatsapp_number',
-            __('WhatsApp Number', 'wildtours-plugin'),
-            [$this, 'renderTextField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'whatsapp_number',
-                'placeholder' => __('919000000000', 'wildtours-plugin')
-            ]
-        );
+        $this->addAvailabilityField('blocked_dates', __('Blocked Dates (comma separated YYYY-MM-DD)'), __('2026-12-25,2026-12-31'));
+        $this->addAvailabilityField('daily_booking_limit', __('Daily Booking Limit per Package'), __('6'));
+        $this->addAvailabilityField('rest_api_key', __('REST Booking API Key'), __('Set a long random key for X-PWT-API-KEY header'));
+        $this->addAvailabilityField('rest_rate_limit_per_minute', __('REST Rate Limit Per Minute'), __('20'));
+    }
 
+    /**
+     * Add a field to the General section.
+     */
+    private function addGeneralField(string $id, string $label, string $placeholder): void
+    {
         add_settings_field(
-            'company_address',
-            __('Company Address', 'wildtours-plugin'),
-            [$this, 'renderTextareaField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'company_address',
-                'placeholder' => __('Panna, Madhya Pradesh, India', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'booking_email',
-            __('Booking Notification Email', 'wildtours-plugin'),
-            [$this, 'renderEmailField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'booking_email',
-                'placeholder' => __('bookings@example.com', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'hero_title',
-            __('Homepage Hero Title', 'wildtours-plugin'),
-            [$this, 'renderTextField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'hero_title',
-                'placeholder' => __('Explore Panna Tiger Reserve', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'hero_subtitle',
-            __('Homepage Hero Subtitle', 'wildtours-plugin'),
-            [$this, 'renderTextareaField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'hero_subtitle',
-                'placeholder' => __('Trusted safari planning, premium stays, and complete travel support.', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'featured_package_ids',
-            __('Featured Package IDs (comma separated)', 'wildtours-plugin'),
-            [$this, 'renderTextField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'featured_package_ids',
-                'placeholder' => __('660,668,675', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'payment_page_url',
-            __('Payment Page URL', 'wildtours-plugin'),
-            [$this, 'renderTextField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'payment_page_url',
-                'placeholder' => __('https://example.com/payment/', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'payment_upi_id',
-            __('UPI ID', 'wildtours-plugin'),
-            [$this, 'renderTextField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'payment_upi_id',
-                'placeholder' => __('business@upi', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'payment_gateway',
-            __('Payment Gateway Mode', 'wildtours-plugin'),
-            [$this, 'renderSelectField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'payment_gateway',
-                'options' => [
-                    'manual' => __('Manual Reference (UPI/Bank)', 'wildtours-plugin'),
-                    'razorpay' => __('Razorpay (Hosted Redirect)', 'wildtours-plugin'),
-                    'cashfree' => __('Cashfree (Hosted Redirect)', 'wildtours-plugin'),
-                ],
-            ]
-        );
-
-        add_settings_field(
-            'payment_gateway_checkout_url',
-            __('Gateway Checkout URL', 'wildtours-plugin'),
-            [$this, 'renderTextField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'payment_gateway_checkout_url',
-                'placeholder' => __('https://payments.example.com/checkout', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'payment_methods',
-            __('Allowed Payment Methods (comma separated)', 'wildtours-plugin'),
-            [$this, 'renderTextField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'payment_methods',
-                'placeholder' => __('upi,bank_transfer,cash', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'payment_advance_percent',
-            __('Advance Payment Percent', 'wildtours-plugin'),
-            [$this, 'renderNumberField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'payment_advance_percent',
-                'placeholder' => __('30', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'payment_instructions',
-            __('Payment Instructions', 'wildtours-plugin'),
-            [$this, 'renderTextareaField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'payment_instructions',
-                'placeholder' => __('Share bank or UPI instructions for advance booking confirmation.', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'blocked_dates',
-            __('Blocked Dates (comma separated YYYY-MM-DD)', 'wildtours-plugin'),
-            [$this, 'renderTextareaField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'blocked_dates',
-                'placeholder' => __('2026-12-25,2026-12-31', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'daily_booking_limit',
-            __('Daily Booking Limit per Package', 'wildtours-plugin'),
-            [$this, 'renderNumberField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'daily_booking_limit',
-                'placeholder' => __('6', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'rest_api_key',
-            __('REST Booking API Key', 'wildtours-plugin'),
-            [$this, 'renderTextField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'rest_api_key',
-                'placeholder' => __('Set a long random key for X-PWT-API-KEY header', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'rest_rate_limit_per_minute',
-            __('REST Rate Limit Per Minute', 'wildtours-plugin'),
-            [$this, 'renderNumberField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'rest_rate_limit_per_minute',
-                'placeholder' => __('20', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'google_analytics_id',
-            __('Google Analytics ID', 'wildtours-plugin'),
-            [$this, 'renderTextField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'google_analytics_id',
-                'placeholder' => __('G-XXXXXXXXXX', 'wildtours-plugin')
-            ]
+            $id,
+            $label,
+            function () use ($id, $placeholder) {
+                $options = get_option('pwt_settings_general', []);
+                $value = $options[$id] ?? '';
+                ?>
+                <input
+                    type="text"
+                    class="regular-text"
+                    name="pwt_settings_general[<?php echo esc_attr($id); ?>]"
+                    placeholder="<?php echo esc_attr($placeholder); ?>"
+                    value="<?php echo esc_attr($value); ?>">
+                <?php
+            },
+            'pwt-settings-general',
+            $id
         );
     }
 
-    public function sanitize(array $input): array
+    /**
+     * Add a field to the Payments section.
+     */
+    private function addPaymentsField(string $id, string $label, string|array $placeholderOrOptions): void
+    {
+        add_settings_field(
+            $id,
+            $label,
+            function () use ($id, $placeholderOrOptions) {
+                $options = get_option('pwt_settings_payments', []);
+                $value = $options[$id] ?? '';
+
+                if (is_array($placeholderOrOptions)) {
+                    ?>
+                    <select class="regular-text" name="pwt_settings_payments[<?php echo esc_attr($id); ?>]">
+                        <?php foreach ($placeholderOrOptions as $choiceValue => $choiceLabel) : ?>
+                            <option value="<?php echo esc_attr((string) $choiceValue); ?>" <?php selected($value, (string) $choiceValue); ?>>
+                                <?php echo esc_html((string) $choiceLabel); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?php
+                } else {
+                    ?>
+                    <input
+                        type="text"
+                        class="regular-text"
+                        name="pwt_settings_payments[<?php echo esc_attr($id); ?>]"
+                        placeholder="<?php echo esc_attr($placeholderOrOptions); ?>"
+                        value="<?php echo esc_attr($value); ?>">
+                    <?php
+                }
+            },
+            'pwt-settings-payments',
+            $id
+        );
+    }
+
+    /**
+     * Add a field to the Availability section.
+     */
+    private function addAvailabilityField(string $id, string $label, string $placeholder): void
+    {
+        add_settings_field(
+            $id,
+            $label,
+            function () use ($id, $placeholder) {
+                $options = get_option('pwt_settings_availability', []);
+                $value = $options[$id] ?? '';
+                ?>
+                <input
+                    type="text"
+                    class="regular-text"
+                    name="pwt_settings_availability[<?php echo esc_attr($id); ?>]"
+                    placeholder="<?php echo esc_attr($placeholder); ?>"
+                    value="<?php echo esc_attr($value); ?>">
+                <?php
+            },
+            'pwt-settings-availability',
+            $id
+        );
+    }
+
+    /**
+     * Sanitize General settings.
+     */
+    public function sanitizeGeneral(array $input): array
     {
         $sanitized = [];
 
@@ -308,6 +233,18 @@ class Settings
             }
         }
         $sanitized['featured_package_ids'] = implode(',', $featuredValidated);
+        $sanitized['google_analytics_id'] = sanitize_text_field($input['google_analytics_id'] ?? '');
+
+        return $sanitized;
+    }
+
+    /**
+     * Sanitize Payments settings.
+     */
+    public function sanitizePayments(array $input): array
+    {
+        $sanitized = [];
+
         $sanitized['payment_page_url'] = esc_url_raw($input['payment_page_url'] ?? '');
         $sanitized['payment_upi_id'] = sanitize_text_field($input['payment_upi_id'] ?? '');
         $sanitized['payment_gateway'] = sanitize_key($input['payment_gateway'] ?? 'manual');
@@ -315,6 +252,17 @@ class Settings
         $sanitized['payment_methods'] = sanitize_text_field($input['payment_methods'] ?? 'upi,bank_transfer,cash');
         $sanitized['payment_advance_percent'] = max(1, min(100, absint($input['payment_advance_percent'] ?? 30)));
         $sanitized['payment_instructions'] = sanitize_textarea_field($input['payment_instructions'] ?? '');
+
+        return $sanitized;
+    }
+
+    /**
+     * Sanitize Availability settings.
+     */
+    public function sanitizeAvailability(array $input): array
+    {
+        $sanitized = [];
+
         $blockedRaw = array_filter(array_map('trim', explode(',', (string) ($input['blocked_dates'] ?? ''))));
         $blockedValidated = [];
         foreach ($blockedRaw as $blockedDate) {
@@ -324,77 +272,62 @@ class Settings
             }
         }
         $sanitized['blocked_dates'] = implode(',', array_values(array_unique($blockedValidated)));
+
         $sanitized['daily_booking_limit'] = max(1, absint($input['daily_booking_limit'] ?? 6));
         $sanitized['rest_api_key'] = sanitize_text_field($input['rest_api_key'] ?? '');
         $sanitized['rest_rate_limit_per_minute'] = max(1, absint($input['rest_rate_limit_per_minute'] ?? 20));
-        $sanitized['google_analytics_id'] = sanitize_text_field($input['google_analytics_id'] ?? '');
 
         return $sanitized;
     }
 
-    public function renderNumberField(array $args): void
+    public function renderGeneralPage(): void
     {
-        $this->renderField('number', $args);
-    }
-
-    public function renderTextField(array $args): void
-    {
-        $this->renderField('text', $args);
-    }
-
-    public function renderEmailField(array $args): void
-    {
-        $this->renderField('email', $args);
-    }
-
-    public function renderTextareaField(array $args): void
-    {
-        $options = get_option('pwt_settings', []);
-        $key = $args['key'];
-        $placeholder = $args['placeholder'] ?? '';
-        $value = $options[$key] ?? '';
-
         ?>
-        <textarea
-            class="large-text"
-            rows="3"
-            name="pwt_settings[<?php echo esc_attr($key); ?>]"
-            placeholder="<?php echo esc_attr($placeholder); ?>"><?php echo esc_textarea($value); ?></textarea>
+        <div class="wrap">
+            <h1><?php esc_html_e('General Settings', 'wildtours-plugin'); ?></h1>
+            <form method="post" action="options.php">
+                <?php
+                settings_fields('pwt_settings_general');
+                echo settings_errors();
+                do_settings_sections('pwt-settings-general');
+                submit_button();
+                ?>
+            </form>
+        </div>
         <?php
     }
 
-    public function renderSelectField(array $args): void
+    public function renderPaymentsPage(): void
     {
-        $options = get_option('pwt_settings', []);
-        $key = $args['key'];
-        $value = (string) ($options[$key] ?? '');
-        $choices = $args['options'] ?? [];
-
         ?>
-        <select class="regular-text" name="pwt_settings[<?php echo esc_attr($key); ?>]">
-            <?php foreach ($choices as $choiceValue => $choiceLabel) : ?>
-                <option value="<?php echo esc_attr((string) $choiceValue); ?>" <?php selected($value, (string) $choiceValue); ?>>
-                    <?php echo esc_html((string) $choiceLabel); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+        <div class="wrap">
+            <h1><?php esc_html_e('Payment Settings', 'wildtours-plugin'); ?></h1>
+            <form method="post" action="options.php">
+                <?php
+                settings_fields('pwt_settings_payments');
+                echo settings_errors();
+                do_settings_sections('pwt-settings-payments');
+                submit_button();
+                ?>
+            </form>
+        </div>
         <?php
     }
 
-    private function renderField(string $type, array $args): void
+    public function renderAvailabilityPage(): void
     {
-        $options = get_option('pwt_settings', []);
-        $key = $args['key'];
-        $placeholder = $args['placeholder'] ?? '';
-        $value = $options[$key] ?? '';
-
         ?>
-        <input
-            type="<?php echo esc_attr($type); ?>"
-            class="regular-text"
-            name="pwt_settings[<?php echo esc_attr($key); ?>]"
-            placeholder="<?php echo esc_attr($placeholder); ?>"
-            value="<?php echo esc_attr($value); ?>">
+        <div class="wrap">
+            <h1><?php esc_html_e('Availability Settings', 'wildtours-plugin'); ?></h1>
+            <form method="post" action="options.php">
+                <?php
+                settings_fields('pwt_settings_availability');
+                echo settings_errors();
+                do_settings_sections('pwt-settings-availability');
+                submit_button();
+                ?>
+            </form>
+        </div>
         <?php
     }
 }
