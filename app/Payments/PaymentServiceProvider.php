@@ -10,6 +10,7 @@ final class PaymentServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->singleton(PaymentRepository::class, PaymentRepository::class);
+        $this->singleton(PaymentEventRepository::class, PaymentEventRepository::class);
         $this->singleton(PaymentService::class, PaymentService::class);
     }
     public function boot(): void

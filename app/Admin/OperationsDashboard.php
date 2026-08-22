@@ -104,8 +104,8 @@ final class OperationsDashboard
             <tbody>
             <?php foreach ($rows as $r): ?>
                 <tr>
-                    <td><?php echo esc_html($r['booking_number']); ?><br><small>#<?php echo esc_html($r['id']); ?></small></td>
-                    <td><?php echo esc_html(trim(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? '')) . ' ' . ($r['email'] ?? '')); ?></td>
+                    <td><a href="<?php echo esc_url(BookingDetailPage::url((int) $r['id'])); ?>"><?php echo esc_html($r['booking_number']); ?></a><br><small>#<?php echo esc_html($r['id']); ?></small></td>
+                    <td><a href="<?php echo esc_url(BookingDetailPage::url((int) $r['id'])); ?>"><?php echo esc_html(trim(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? '')) ?: ($r['email'] ?? '—')); ?></a><br><small><?php echo esc_html($r['email'] ?? ''); ?></small></td>
                     <td><?php echo esc_html(($r['travel_start'] ?? '') . ' → ' . ($r['travel_end'] ?? '')); ?></td>
                     <td><?php echo esc_html($r['currency'] . ' ' . number_format_i18n((float) $r['total'], 2)); ?></td>
                     <td><?php echo esc_html(BookingStatus::label((string) $r['status'])); ?></td>
@@ -126,6 +126,7 @@ final class OperationsDashboard
             esc_html($label)
         );
 
+        echo '<a class="button button-small" href="' . esc_url(BookingDetailPage::url($bookingId)) . '">' . esc_html__('View', 'wildtours-plugin') . '</a> ';
         echo $link('voucher', __('Voucher', 'wildtours-plugin'));
 
         if (in_array($status, ['pending', 'held'], true)) {

@@ -26,25 +26,26 @@ final class HoldService
             foreach ($items as $item) {
                 $resourceId = absint($item['object_id'] ?? 0);
                 $resourceType = (string)($item['item_type'] ?? '');
-                $date = (string)($item['start_date'] ?? '');
+                $start = (string)($item['start_date'] ?? '');
+                $end = (string)($item['end_date'] ?? $start);
                 $quantity = max(1, (int)($item['quantity'] ?? 1));
 
-                if (!$resourceId || !$resourceType || $date === '') {
+                if (!$resourceId || !$resourceType || $start === '') {
                     continue;
                 }
 
-                if (!$this->availability->check($resourceId, $resourceType, $date, $quantity)['available']) {
-                    $this->releaseHeld($held);
-                    return false;
+                foreach ($this->serviceDates($start, $end) as $date) {
+                    if (!$this->availability->check($resourceId, $resourceType, $date, $quantity)['available']) {
+                        $this->releaseHeld($held);
+                        return false;
+                    }
+                    if (!$this->availability->reserve($resourceId, $resourceType, $date, $quantity)) {
+                        $this->releaseHeld($held);
+                        return false;
+                    }
+                    $held[] = [$resourceId, $resourceType, $date, $quantity];
+                    $this->holds->create($bookingId, $resourceId, $resourceType, $date, $quantity, $ttlSeconds);
                 }
-
-                if (!$this->availability->reserve($resourceId, $resourceType, $date, $quantity)) {
-                    $this->releaseHeld($held);
-                    return false;
-                }
-
-                $held[] = [$resourceId, $resourceType, $date, $quantity];
-                $this->holds->create($bookingId, $resourceId, $resourceType, $date, $quantity, $ttlSeconds);
             }
 
             return true;
@@ -101,6 +102,19 @@ final class HoldService
     /**
      * @param array<int, array{0:int,1:string,2:string,3:int}> $held
      */
+    /** @return array<int,string> */
+    private function serviceDates(string $start, string $end): array
+    {
+        try { $from = new \DateTimeImmutable($start); $to = new \DateTimeImmutable($end ?: $start); } catch (\Throwable) { return [$start]; }
+        if ($to < $from) { $to = $from; }
+        // End date is exclusive for multi-day stays, but single-day services reserve once.
+        $exclusive = $to > $from;
+        $last = $exclusive ? $to->modify('-1 day') : $to;
+        $dates = [];
+        for ($d=$from; $d <= $last; $d=$d->modify('+1 day')) { $dates[] = $d->format('Y-m-d'); }
+        return $dates ?: [$from->format('Y-m-d')];
+    }
+
     private function releaseHeld(array $held): void
     {
         foreach ($held as [$resourceId, $resourceType, $date, $quantity]) {

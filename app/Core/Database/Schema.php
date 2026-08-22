@@ -5,7 +5,7 @@ defined('ABSPATH') || exit;
 
 final class Schema
 {
-    public const VERSION = '2.5.0';
+    public const VERSION = '2.9.0';
 
     public static function tables(): array
     {
@@ -23,6 +23,8 @@ final class Schema
             'vendors'      => $wpdb->prefix . 'pwt_vendors',
             'vendor_rates' => $wpdb->prefix . 'pwt_vendor_rates',
             'settlements'  => $wpdb->prefix . 'pwt_vendor_settlements',
+            'payment_events' => $wpdb->prefix . 'pwt_payment_events',
+            'package_components' => $wpdb->prefix . 'pwt_package_components',
         ];
     }
 
@@ -70,6 +72,7 @@ final class Schema
             deposit_due DECIMAL(12,2) NOT NULL DEFAULT 0,
             notes TEXT NULL,
             source VARCHAR(40) NULL,
+            quote_snapshot LONGTEXT NULL,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
             PRIMARY KEY (id),
@@ -100,6 +103,10 @@ final class Schema
             KEY booking_id (booking_id),
             KEY object_lookup (item_type, object_id),
             KEY vendor_id (vendor_id)
+        ) $c;";
+
+        $sql[] = "CREATE TABLE {$t['package_components']} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, package_id BIGINT UNSIGNED NOT NULL, resource_type VARCHAR(40) NOT NULL, resource_id BIGINT UNSIGNED NOT NULL, name VARCHAR(255) NULL, quantity INT UNSIGNED NOT NULL DEFAULT 1, offset_start INT NOT NULL DEFAULT 0, offset_end INT NOT NULL DEFAULT 0, required TINYINT(1) NOT NULL DEFAULT 1, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, PRIMARY KEY (id), KEY package_id (package_id), KEY resource_lookup (resource_type, resource_id)
         ) $c;";
 
         $sql[] = "CREATE TABLE {$t['availability']} (
@@ -156,7 +163,23 @@ final class Schema
             KEY booking_id (booking_id),
             KEY transaction_id (transaction_id),
             KEY status (status),
-            KEY transaction_type (transaction_type)
+            KEY transaction_type (transaction_type),
+            UNIQUE KEY reference_unique (reference)
+        ) $c;";
+
+        $sql[] = "CREATE TABLE {$t['payment_events']} (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            provider VARCHAR(40) NOT NULL,
+            event_id VARCHAR(190) NOT NULL,
+            status VARCHAR(30) NOT NULL DEFAULT 'received',
+            payload_hash CHAR(64) NOT NULL,
+            processed_at DATETIME NULL,
+            error_message TEXT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY provider_event (provider, event_id),
+            KEY status (status)
         ) $c;";
 
         $sql[] = "CREATE TABLE {$t['holds']} (

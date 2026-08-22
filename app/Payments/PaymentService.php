@@ -106,6 +106,11 @@ final class PaymentService
         }
 
         $amount = (float)($data['amount'] ?? 0);
+        $key = sanitize_text_field((string)($data['idempotency_key'] ?? ''));
+        if (!$key) {
+            return new WP_Error('pwt_refund_idempotency_required', __('Refund idempotency key is required.', 'wildtours-plugin'));
+        }
+        if ($existing = $this->payments->byIdempotencyKey($key)) { return (int)$existing['id']; }
         if ($amount <= 0) {
             return new WP_Error('pwt_refund_amount_required', __('A positive refund amount is required.', 'wildtours-plugin'));
         }
@@ -117,8 +122,10 @@ final class PaymentService
         }
 
         $paid = $this->sumPaid($bookingId, 'payment');
+        $alreadyRefunded = $this->sumPaid($bookingId, 'refund');
+        if ($amount > max(0, $paid - $alreadyRefunded)) { return new WP_Error('pwt_refund_exceeds_paid', __('Refund exceeds the net amount paid.', 'wildtours-plugin')); }
 
-        return Transaction::run(function () use ($bookingId, $amount, $paid, $data): int|WP_Error {
+        return Transaction::run(function () use ($bookingId, $amount, $paid, $data, $key): int|WP_Error {
             $refundId = $this->payments->create([
                 'booking_id' => $bookingId,
                 'provider' => sanitize_key((string)($data['provider'] ?? 'manual')),
@@ -127,7 +134,7 @@ final class PaymentService
                 'currency' => strtoupper(sanitize_text_field((string)($data['currency'] ?? 'INR'))),
                 'status' => 'paid',
                 'transaction_type' => 'refund',
-                'idempotency_key' => sanitize_text_field((string)($data['idempotency_key'] ?? '')),
+                'idempotency_key' => $key,
                 'reference' => sanitize_text_field((string)($data['reference'] ?? '')),
                 'gateway_response' => $data['gateway_response'] ?? [],
                 'paid_at' => current_time('mysql'),

@@ -199,9 +199,10 @@ final class BookingOrchestrator
                 if (!$resourceId) {
                     continue;
                 }
-                $date = (string)($item['start_date'] ?? '');
-                if (!$this->availability->reserve($resourceId, (string)$item['item_type'], $date, (int)$item['quantity'])) {
-                    return new WP_Error('pwt_inventory_unavailable', __('Inventory is no longer available.', 'wildtours-plugin'));
+                foreach ($this->allocationDates((string)($item['start_date'] ?? ''), (string)($item['end_date'] ?? $item['start_date'] ?? '')) as $date) {
+                    if (!$this->availability->reserve($resourceId, (string)$item['item_type'], $date, (int)$item['quantity'])) {
+                        return new WP_Error('pwt_inventory_unavailable', __('Inventory is no longer available.', 'wildtours-plugin'));
+                    }
                 }
             }
 
@@ -246,12 +247,9 @@ final class BookingOrchestrator
                 foreach ($items as $item) {
                     $resourceId = absint($item['object_id'] ?? 0);
                     if ($resourceId) {
-                        $this->availability->release(
-                            $resourceId,
-                            (string)$item['item_type'],
-                            (string)$item['start_date'],
-                            (int)$item['quantity']
-                        );
+                        foreach ($this->allocationDates((string)$item['start_date'], (string)($item['end_date'] ?? $item['start_date'])) as $date) {
+                            $this->availability->release($resourceId, (string)$item['item_type'], $date, (int)$item['quantity']);
+                        }
                     }
                 }
             }
@@ -316,4 +314,19 @@ final class BookingOrchestrator
             update_post_meta($legacyPostId, '_pwt_status', $status);
         }
     }
+
+    /** @return string[] Dates allocated by this booking item. End date is exclusive for multi-day stays. */
+    private function allocationDates(string $start, string $end): array
+    {
+        if ($start === '' || $end === '') { return []; }
+        try {
+            $from = new \DateTimeImmutable($start);
+            $to = new \DateTimeImmutable($end);
+        } catch (\Throwable) { return [$start]; }
+        if ($to <= $from) { return [$from->format('Y-m-d')]; }
+        $dates = [];
+        for ($d = $from; $d < $to; $d = $d->modify('+1 day')) { $dates[] = $d->format('Y-m-d'); }
+        return $dates;
+    }
+
 }

@@ -51,10 +51,12 @@ final class AvailabilityRepository
     {
         $row = $this->get($resourceId, $resourceType, $date);
         if (!$row) {
-            return ['available' => true, 'remaining' => PHP_INT_MAX];
+            // Unknown inventory must not silently behave as unlimited capacity.
+            return ['available' => false, 'remaining' => 0, 'reason' => 'inventory_not_configured'];
         }
 
-        $remaining = max(0, (int)$row['capacity'] - (int)$row['reserved'] - (int)$row['blocked']);
+        $held = $this->activeHeld($resourceId, $resourceType, $date);
+        $remaining = max(0, (int)$row['capacity'] - (int)$row['reserved'] - (int)$row['blocked'] - $held);
         if (($row['status'] ?? 'open') !== 'open') {
             $remaining = 0;
         }
@@ -85,17 +87,9 @@ final class AvailabilityRepository
             return false;
         }
 
-        // Missing row: provision capacity for this reservation so that a
-        // booking that passed check() can always be confirmed.
-        $inserted = $wpdb->query($wpdb->prepare(
-            "INSERT INTO {$table} (resource_type, resource_id, service_date, capacity, reserved, blocked, status)
-             VALUES (%s, %d, %s, %d, %d, %d, %s)",
-            $type, $resourceId, sanitize_text_field($date), $quantity, $quantity, 0, 'open'
-        ));
-        if ($inserted !== false) {
-            $this->flush($resourceId, $resourceType, $date);
-        }
-        return $inserted !== false;
+        // Never create capacity implicitly during a booking confirmation.
+        // Capacity must be configured explicitly by operations.
+        return false;
     }
 
     public function release(int $resourceId, string $resourceType, string $date, int $quantity = 1): bool
@@ -111,6 +105,16 @@ final class AvailabilityRepository
             $this->flush($resourceId, $resourceType, $date);
         }
         return $result !== false;
+    }
+
+    private function activeHeld(int $resourceId, string $resourceType, string $date): int
+    {
+        global $wpdb;
+        $table = Schema::tables()['holds'];
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COALESCE(SUM(quantity), 0) FROM {$table} WHERE resource_type=%s AND resource_id=%d AND service_date=%s AND status='active' AND expires_at > UTC_TIMESTAMP()",
+            sanitize_key($resourceType), $resourceId, sanitize_text_field($date)
+        ));
     }
 
     private function cacheKey(int $resourceId, string $resourceType, string $date): string

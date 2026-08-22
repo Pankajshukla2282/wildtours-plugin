@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace PWT\Pricing;
 defined('ABSPATH') || exit;
 
-define('HOUR_IN_SECONDS', 60 * 60);
+if (!defined('HOUR_IN_SECONDS')) { define('HOUR_IN_SECONDS', 60 * 60); }
 
 final class PricingService
 {
@@ -35,7 +35,7 @@ final class PricingService
         ], $attributes));
 
         $unit = (float)$amount;
-        $referenceId = 'pwt_' . mt_rand(1000, 9999) . '_' . $resource_type . '_' . $date;
+        $referenceId = 'PWT-' . gmdate('YmdHis') . '-' . strtoupper(wp_generate_password(12, false, false));
 
         $upiUrl = 'upi://pay?pa=' . self::UPI_PAYEE . '@' . self::UPI_BANK
             . '&pn=' . urlencode('Panna Wild Tour')
@@ -53,7 +53,7 @@ final class PricingService
 
     private function generateUPIQRCode(float $amount, int $resourceId, string $resourceType, string $date): string
     {
-        $referenceId = 'pwt_' . mt_rand(1000, 9999) . '_' . $resource_type . '_' . $date;
+        $referenceId = 'PWT-' . gmdate('YmdHis') . '-' . strtoupper(wp_generate_password(12, false, false));
         $transactionNote = 'Safari/package payment - ' . $resource_type . ' on ' . $date;
 
         $upiUrl = 'upi://pay?pa=' . self::UPI_PAYEE . '@' . self::UPI_BANK
@@ -68,7 +68,8 @@ final class PricingService
 
     public function quote(int $resourceId, string $resourceType, string $date, int $quantity = 1, float $fallback = 0.0): array
     {
-        $cacheKey = self::CACHE_KEY_PREFIX . '_' . $resourceId . '_' . $resourceType . '_' . $date;
+        $quantity = max(1, $quantity);
+        $cacheKey = self::CACHE_KEY_PREFIX . '_' . sanitize_key($resourceType) . '_' . $resourceId . '_' . sanitize_text_field($date) . '_q' . $quantity . '_f' . md5((string)$fallback);
         $unit = wp_cache_get($cacheKey, 'pwt_pricing');
         if (false !== $unit) {
             $unit = (float)$unit;
@@ -92,6 +93,8 @@ final class PricingService
         }
 
         $quantity = max(1, $quantity);
+        // Round at the persisted money boundary; keep the cached quote quantity-specific.
+        $unit = round($unit, 2);
         $total = round($unit * $quantity, 2);
 
         return [
@@ -104,7 +107,7 @@ final class PricingService
             'rate_id' => $matchedRate ? (int)$matchedRate['id'] : 0,
             'currency' => $matchedRate['currency'] ?? 'INR',
             'season' => $this->seasons->resolve($date),
-            'upi_qr_code' => $this->generateUPIQRCode($unit, mt_rand(1000, 9999), $resource_type, $date),
+            'upi_qr_code' => $this->generateUPIQRCode($total, $resourceId, $resourceType, $date),
         ];
     }
 }

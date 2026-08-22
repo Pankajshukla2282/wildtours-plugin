@@ -10,6 +10,7 @@ final class OperationsServiceProvider extends ServiceProvider
     {
         if (is_admin() && current_user_can('pwt_manage_operations')) {
             $this->make(OperationsDashboard::class)->register();
+            $this->make(BookingDetailPage::class)->register();
         }
     }
 }
