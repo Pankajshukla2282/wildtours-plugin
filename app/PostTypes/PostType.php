@@ -87,13 +87,6 @@ abstract class PostType implements PostTypeInterface
      */
     public function register(): void
     {
-        /*
-         * The service provider may boot after WordPress has
-         * already fired the init action.
-         *
-         * In that case, adding another init callback would mean
-         * the post type is never registered during this request.
-         */
         if (did_action('init')) {
             $this->create();
 
@@ -114,10 +107,6 @@ abstract class PostType implements PostTypeInterface
     {
         $this->validate();
 
-        /*
-         * Avoid duplicate registration if create() is reached
-         * more than once during the same request.
-         */
         if (post_type_exists($this->postType)) {
             return;
         }
@@ -155,29 +144,40 @@ abstract class PostType implements PostTypeInterface
     protected function args(): array
     {
         return [
-            'labels'          => $this->labels(),
-            'public'          => $this->public,
-            'show_ui'         => true,
-            'show_in_rest'    => $this->showInRest,
-            'menu_position'   => $this->menuPosition,
-            'menu_icon'       => $this->menuIcon,
+            'labels' => $this->labels(),
 
-            'supports'        => apply_filters(
+            'public' => $this->public,
+
+            'show_ui' => true,
+
+            /*
+             * All plugin custom post types appear below
+             * the central Panna Wild Tour admin menu.
+             */
+            'show_in_menu' => PWT_ADMIN_MENU_SLUG,
+
+            'show_in_rest' => $this->showInRest,
+
+            'menu_position' => $this->menuPosition,
+
+            'menu_icon' => $this->menuIcon,
+
+            'supports' => apply_filters(
                 "pwt/post_type_supports/{$this->postType}",
                 $this->supports
             ),
 
-            'taxonomies'      => $this->taxonomies,
+            'taxonomies' => $this->taxonomies,
 
-            'has_archive'     => $this->public
+            'has_archive' => $this->public
                 ? $this->hasArchive
                 : false,
 
             'capability_type' => $this->capabilityType,
 
-            'map_meta_cap'    => true,
+            'map_meta_cap' => true,
 
-            'rewrite'         => $this->public
+            'rewrite' => $this->public
                 ? [
                     'slug' => $this->rewriteSlug ?? $this->postType,
                 ]
@@ -193,39 +193,42 @@ abstract class PostType implements PostTypeInterface
         return apply_filters(
             "pwt/post_type_labels/{$this->postType}",
             [
-                'name'               => $this->plural,
-                'singular_name'      => $this->singular,
-                'menu_name'          => $this->plural,
-                'name_admin_bar'     => $this->singular,
+                'name' => $this->plural,
 
-                'add_new'            => __('Add New', 'wildtours-plugin'),
+                'singular_name' => $this->singular,
 
-                'add_new_item'       => sprintf(
+                'menu_name' => $this->plural,
+
+                'name_admin_bar' => $this->singular,
+
+                'add_new' => __('Add New', 'wildtours-plugin'),
+
+                'add_new_item' => sprintf(
                     __('Add New %s', 'wildtours-plugin'),
                     $this->singular
                 ),
 
-                'edit_item'          => sprintf(
+                'edit_item' => sprintf(
                     __('Edit %s', 'wildtours-plugin'),
                     $this->singular
                 ),
 
-                'new_item'           => sprintf(
+                'new_item' => sprintf(
                     __('New %s', 'wildtours-plugin'),
                     $this->singular
                 ),
 
-                'view_item'          => sprintf(
+                'view_item' => sprintf(
                     __('View %s', 'wildtours-plugin'),
                     $this->singular
                 ),
 
-                'search_items'       => sprintf(
+                'search_items' => sprintf(
                     __('Search %s', 'wildtours-plugin'),
                     $this->plural
                 ),
 
-                'not_found'          => sprintf(
+                'not_found' => sprintf(
                     __('No %s found.', 'wildtours-plugin'),
                     strtolower($this->plural)
                 ),
@@ -235,7 +238,7 @@ abstract class PostType implements PostTypeInterface
                     strtolower($this->plural)
                 ),
 
-                'all_items'          => sprintf(
+                'all_items' => sprintf(
                     __('All %s', 'wildtours-plugin'),
                     $this->plural
                 ),
