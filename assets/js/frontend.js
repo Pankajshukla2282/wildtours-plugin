@@ -44,7 +44,7 @@
             return;
         }
 
-        updateMessage(message, "<?php esc_html_e('Checking availability...', 'wildtours-plugin'); ?>";
+        updateMessage(message, "<?php esc_html_e('Checking availability...', 'wildtours-plugin'); ?>", "");
 
         const estimatePayload = new FormData();
         estimatePayload.append("action", "pwt_quote_booking");
@@ -80,7 +80,7 @@
                 return;
             }
 
-            updateMessage(message, "<?php esc_html_e('Availability confirmed. Proceeding with booking...', 'wildtours-plugin'); ?>";
+            updateMessage(message, "<?php esc_html_e('Availability confirmed. Proceeding with booking...', 'wildtours-plugin'); ?>", "");
         } catch (error) {
             updateMessage(message, "<?php esc_html_e('Error checking availability.', 'wildtours-plugin'); ?>", "is-error");
             return;
