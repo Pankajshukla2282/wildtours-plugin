@@ -186,6 +186,27 @@
 
 .pwt-contact-card {
     border-top: 4px solid var(--pwt-gold);
+    overflow: hidden;
+}
+
+.pwt-contact-card .pwt-section-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.pwt-contact-card .pwt-section-header h2 {
+    margin: 0;
+    flex: 1;
+    min-width: 200px;
+}
+
+.pwt-contact-card .pwt-section-header p {
+    margin: 0;
+    flex: 1;
+    min-width: 200px;
 }
 
 .pwt-grid-two {
