@@ -11,6 +11,7 @@
  * Text Domain: wildtours-plugin
  */
 
+
 defined('ABSPATH') || exit;
 
 define('PWT_VERSION', '2.5.19');
