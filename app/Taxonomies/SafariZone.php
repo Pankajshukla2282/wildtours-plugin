@@ -19,5 +19,6 @@ final class SafariZone extends Taxonomy
 
     protected array $postTypes = [
         'pwt_safari',
+        'pwt_safari_schedule',
     ];
 }

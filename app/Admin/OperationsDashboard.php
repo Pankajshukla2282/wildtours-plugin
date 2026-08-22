@@ -191,6 +191,7 @@ final class OperationsDashboard
                 if (empty($document['html'])) {
                     wp_die(__('Booking not found.', 'wildtours-plugin'));
                 }
+                echo '<p><a href="' . esc_url(BookingDetailPage::url($bookingId)) . '">' . esc_html__('← Back to Booking Details', 'wildtours-plugin') . '</a></p>';
                 echo $document['html']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sanitized inside templates
                 exit;
         }
