@@ -16,26 +16,10 @@ class Settings
         );
     }
 
-    /**
-     * Register all three settings sections.
-     */
     public function registerSettings(): void
     {
-        // --- General Settings ---
-        $this->registerGeneralSettings();
-
-        // --- Payments Settings ---
-        $this->registerPaymentsSettings();
-
-        // --- Availability Settings ---
-        $this->registerAvailabilitySettings();
-    }
-
-    /**
-     * Register General Settings section.
-     */
-    private function registerGeneralSettings(): void
-    {
+        // Register all settings with their sections
+        // General Settings
         register_setting(
             'pwt_settings_general',
             'pwt_settings_general',
@@ -47,8 +31,8 @@ class Settings
         add_settings_section(
             'pwt_general',
             __('General Settings', 'wildtours-plugin'),
-            '__return_false',
-            'pwt-settings-general'
+            false,
+            'pwt-general'
         );
 
         $this->addGeneralField('company_name', __('Company Name'), __('Panna Wild Tour'));
@@ -61,13 +45,8 @@ class Settings
         $this->addGeneralField('hero_subtitle', __('Homepage Hero Subtitle'), __('Trusted safari planning, premium stays, and complete travel support.'));
         $this->addGeneralField('featured_package_ids', __('Featured Package IDs (comma separated)'), __('660,668,675'));
         $this->addGeneralField('google_analytics_id', __('Google Analytics ID'), __('G-XXXXXXXXXX'));
-    }
 
-    /**
-     * Register Payments Settings section.
-     */
-    private function registerPaymentsSettings(): void
-    {
+        // Payments Settings
         register_setting(
             'pwt_settings_payments',
             'pwt_settings_payments',
@@ -79,8 +58,8 @@ class Settings
         add_settings_section(
             'pwt_payments',
             __('Payment Settings', 'wildtours-plugin'),
-            '__return_false',
-            'pwt-settings-payments'
+            false,
+            'pwt-payments'
         );
 
         $this->addPaymentsField('payment_page_url', __('Payment Page URL'), __('https://example.com/payment/'));
@@ -94,13 +73,8 @@ class Settings
         $this->addPaymentsField('payment_methods', __('Allowed Payment Methods (comma separated)'), __('upi,bank_transfer,cash'));
         $this->addPaymentsField('payment_advance_percent', __('Advance Payment Percent'), __('30'));
         $this->addPaymentsField('payment_instructions', __('Payment Instructions'), __('Share bank or UPI instructions for advance booking confirmation.'));
-    }
 
-    /**
-     * Register Availability Settings section.
-     */
-    private function registerAvailabilitySettings(): void
-    {
+        // Availability Settings
         register_setting(
             'pwt_settings_availability',
             'pwt_settings_availability',
@@ -112,8 +86,8 @@ class Settings
         add_settings_section(
             'pwt_availability',
             __('Availability Settings', 'wildtours-plugin'),
-            '__return_false',
-            'pwt-settings-availability'
+            false,
+            'pwt-availability'
         );
 
         $this->addAvailabilityField('blocked_dates', __('Blocked Dates (comma separated YYYY-MM-DD)'), __('2026-12-25,2026-12-31'));
@@ -122,97 +96,57 @@ class Settings
         $this->addAvailabilityField('rest_rate_limit_per_minute', __('REST Rate Limit Per Minute'), __('20'));
     }
 
-    /**
-     * Add a field to the General section.
-     */
     private function addGeneralField(string $id, string $label, string $placeholder): void
     {
         add_settings_field(
             $id,
             $label,
             function () use ($id, $placeholder) {
-                $options = get_option('pwt_settings_general', []);
-                $value = $options[$id] ?? '';
-                ?>
-                <input
-                    type="text"
-                    class="regular-text"
-                    name="pwt_settings_general[<?php echo esc_attr($id); ?>]"
-                    placeholder="<?php echo esc_attr($placeholder); ?>"
-                    value="<?php echo esc_attr($value); ?>">
-                <?php
+                $value = get_option('pwt_settings_general', [])[$id] ?? '';
+                echo '<input type="text" class="regular-text" name="pwt_settings_general[' . esc_attr($id) . ']" placeholder="' . esc_attr($placeholder) . '" value="' . esc_attr($value) . '">';
             },
-            'pwt-settings-general',
+            'pwt-general',
             $id
         );
     }
 
-    /**
-     * Add a field to the Payments section.
-     */
     private function addPaymentsField(string $id, string $label, string|array $placeholderOrOptions): void
     {
         add_settings_field(
             $id,
             $label,
             function () use ($id, $placeholderOrOptions) {
-                $options = get_option('pwt_settings_payments', []);
-                $value = $options[$id] ?? '';
+                $value = get_option('pwt_settings_payments', [])[$id] ?? '';
 
                 if (is_array($placeholderOrOptions)) {
-                    ?>
-                    <select class="regular-text" name="pwt_settings_payments[<?php echo esc_attr($id); ?>]">
-                        <?php foreach ($placeholderOrOptions as $choiceValue => $choiceLabel) : ?>
-                            <option value="<?php echo esc_attr((string) $choiceValue); ?>" <?php selected($value, (string) $choiceValue); ?>>
-                                <?php echo esc_html((string) $choiceLabel); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <?php
+                    echo '<select class="regular-text" name="pwt_settings_payments[' . esc_attr($id) . ']">';
+                    foreach ($placeholderOrOptions as $choiceValue => $choiceLabel) {
+                        echo '<option value="' . esc_attr((string) $choiceValue) . '" ' . selected($value, (string) $choiceValue) . '>' . esc_html((string) $choiceLabel) . '</option>';
+                    }
+                    echo '</select>';
                 } else {
-                    ?>
-                    <input
-                        type="text"
-                        class="regular-text"
-                        name="pwt_settings_payments[<?php echo esc_attr($id); ?>]"
-                        placeholder="<?php echo esc_attr($placeholderOrOptions); ?>"
-                        value="<?php echo esc_attr($value); ?>">
-                    <?php
+                    echo '<input type="text" class="regular-text" name="pwt_settings_payments[' . esc_attr($id) . ']" placeholder="' . esc_attr($placeholderOrOptions) . '" value="' . esc_attr($value) . '">';
                 }
             },
-            'pwt-settings-payments',
+            'pwt-payments',
             $id
         );
     }
 
-    /**
-     * Add a field to the Availability section.
-     */
     private function addAvailabilityField(string $id, string $label, string $placeholder): void
     {
         add_settings_field(
             $id,
             $label,
             function () use ($id, $placeholder) {
-                $options = get_option('pwt_settings_availability', []);
-                $value = $options[$id] ?? '';
-                ?>
-                <input
-                    type="text"
-                    class="regular-text"
-                    name="pwt_settings_availability[<?php echo esc_attr($id); ?>]"
-                    placeholder="<?php echo esc_attr($placeholder); ?>"
-                    value="<?php echo esc_attr($value); ?>">
-                <?php
+                $value = get_option('pwt_settings_availability', [])[$id] ?? '';
+                echo '<input type="text" class="regular-text" name="pwt_settings_availability[' . esc_attr($id) . ']" placeholder="' . esc_attr($placeholder) . '" value="' . esc_attr($value) . '">';
             },
-            'pwt-settings-availability',
+            'pwt-availability',
             $id
         );
     }
 
-    /**
-     * Sanitize General settings.
-     */
     public function sanitizeGeneral(array $input): array
     {
         $sanitized = [];
@@ -238,9 +172,6 @@ class Settings
         return $sanitized;
     }
 
-    /**
-     * Sanitize Payments settings.
-     */
     public function sanitizePayments(array $input): array
     {
         $sanitized = [];
@@ -256,9 +187,6 @@ class Settings
         return $sanitized;
     }
 
-    /**
-     * Sanitize Availability settings.
-     */
     public function sanitizeAvailability(array $input): array
     {
         $sanitized = [];
@@ -280,50 +208,35 @@ class Settings
         return $sanitized;
     }
 
-    public function renderGeneralPage(): void
+    public function renderSettingsPage(): void
     {
+        // Tab navigation
+        $active_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
+
+        // Output admin notice if settings updated
+        if (isset($_GET['settings-updated'])) {
+            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Settings saved.', 'wildtours-plugin') . '</p></div>';
+        }
+
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('General Settings', 'wildtours-plugin'); ?></h1>
+            <h1><?php esc_html_e('Settings', 'wildtours-plugin'); ?></h1>
+
+            <div class="pwt-settings-tabs">
+                <a href="options-general.php?page=pwt-settings&tab=general" class="<?php echo $active_tab === 'general' ? 'nav-tab active' : 'nav-tab'; ?>"><?php esc_html_e('General', 'wildtours-plugin'); ?></a>
+                <a href="options-general.php?page=pwt-settings&tab=payments" class="<?php echo $active_tab === 'payments' ? 'nav-tab active' : 'nav-tab'; ?>"><?php esc_html_e('Payments', 'wildtours-plugin'); ?></a>
+                <a href="options-general.php?page=pwt-settings&tab=availability" class="<?php echo $active_tab === 'availability' ? 'nav-tab active' : 'nav-tab'; ?>"><?php esc_html_e('Availability', 'wildtours-plugin'); ?></a>
+            </div>
+
             <form method="post" action="options.php">
                 <?php
                 settings_fields('pwt_settings_general');
+                echo '<input type="hidden" name="page" value="pwt-settings">';
+                echo '<input type="hidden" name="tab" value="' . esc_attr($active_tab) . '">';
                 echo settings_errors();
-                do_settings_sections('pwt-settings-general');
-                submit_button();
-                ?>
-            </form>
-        </div>
-        <?php
-    }
-
-    public function renderPaymentsPage(): void
-    {
-        ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('Payment Settings', 'wildtours-plugin'); ?></h1>
-            <form method="post" action="options.php">
-                <?php
-                settings_fields('pwt_settings_payments');
-                echo settings_errors();
-                do_settings_sections('pwt-settings-payments');
-                submit_button();
-                ?>
-            </form>
-        </div>
-        <?php
-    }
-
-    public function renderAvailabilityPage(): void
-    {
-        ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('Availability Settings', 'wildtours-plugin'); ?></h1>
-            <form method="post" action="options.php">
-                <?php
-                settings_fields('pwt_settings_availability');
-                echo settings_errors();
-                do_settings_sections('pwt-settings-availability');
+                do_settings_sections('pwt-general');
+                do_settings_sections('pwt-payments');
+                do_settings_sections('pwt-availability');
                 submit_button();
                 ?>
             </form>
