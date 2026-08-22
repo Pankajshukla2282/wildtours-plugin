@@ -11,4 +11,12 @@ final class Restaurant extends PostType
     protected string $menuIcon = 'dashicons-food';
     protected ?string $rewriteSlug = 'restaurants';
     protected array $taxonomies = ['pwt_cuisine'];
+
+    protected function args(): array
+    {
+        $args = parent::args();
+        $args['show_in_menu'] = false;
+
+        return $args;
+    }
 }

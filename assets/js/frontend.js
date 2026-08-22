@@ -80,7 +80,31 @@
                 return;
             }
 
-            updateMessage(message, "<?php esc_html_e('Availability confirmed. Proceeding with booking...', 'wildtours-plugin'); ?>", "");
+            // Proceed to create the booking
+            const bookingPayload = new FormData();
+            bookingPayload.append("action", "pwt_booking");
+            bookingPayload.append("nonce", form.querySelector("[name='nonce']")?.value ?? "");
+            bookingPayload.append("package_id", packageId);
+            bookingPayload.append("travel_date", travelDate);
+            bookingPayload.append("persons", persons);
+
+            const bookingResponse = await fetch(window.pwtFrontend.ajaxUrl, {
+                method: "POST",
+                body: bookingPayload,
+                credentials: "same-origin"
+            });
+
+            const bookingResult = await bookingResponse.json();
+
+            if (bookingResponse.ok && bookingResult.success) {
+                // Booking created successfully - redirect to payment or thank you page
+                window.location.href = "<?php echo esc_url(admin_url('admin.php?page=pwt-operations')); ?>?booking_id=" + bookingResult.data.booking_id;
+            } else {
+                const errorText = bookingResult.data && bookingResult.data.message
+                    ? bookingResult.data.message
+                    : "<?php esc_html_e('Booking creation failed.', 'wildtours-plugin'); ?>";
+                updateMessage(message, errorText, "is-error");
+            }
         } catch (error) {
             updateMessage(message, "<?php esc_html_e('Error checking availability.', 'wildtours-plugin'); ?>", "is-error");
             return;

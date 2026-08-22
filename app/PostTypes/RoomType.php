@@ -11,4 +11,12 @@ final class RoomType extends PostType
     protected string $menuIcon = 'dashicons-admin-home';
     protected ?string $rewriteSlug = 'room-types';
     protected array $taxonomies = ['pwt_resort_category'];
+
+    protected function args(): array
+    {
+        $args = parent::args();
+        $args['show_in_menu'] = false;
+
+        return $args;
+    }
 }
