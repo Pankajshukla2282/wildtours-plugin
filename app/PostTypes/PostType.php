@@ -87,7 +87,24 @@ abstract class PostType implements PostTypeInterface
      */
     public function register(): void
     {
-        add_action('init', [$this, 'create']);
+        /*
+         * The service provider may boot after WordPress has
+         * already fired the init action.
+         *
+         * In that case, adding another init callback would mean
+         * the post type is never registered during this request.
+         */
+        if (did_action('init')) {
+            $this->create();
+
+            return;
+        }
+
+        add_action(
+            'init',
+            [$this, 'create'],
+            0
+        );
     }
 
     /**
@@ -96,6 +113,14 @@ abstract class PostType implements PostTypeInterface
     final public function create(): void
     {
         $this->validate();
+
+        /*
+         * Avoid duplicate registration if create() is reached
+         * more than once during the same request.
+         */
+        if (post_type_exists($this->postType)) {
+            return;
+        }
 
         register_post_type(
             $this->postType,
@@ -132,16 +157,26 @@ abstract class PostType implements PostTypeInterface
         return [
             'labels'          => $this->labels(),
             'public'          => $this->public,
+            'show_ui'         => true,
             'show_in_rest'    => $this->showInRest,
             'menu_position'   => $this->menuPosition,
             'menu_icon'       => $this->menuIcon,
+
             'supports'        => apply_filters(
                 "pwt/post_type_supports/{$this->postType}",
                 $this->supports
             ),
+
             'taxonomies'      => $this->taxonomies,
-            'has_archive'     => $this->hasArchive,
+
+            'has_archive'     => $this->public
+                ? $this->hasArchive
+                : false,
+
             'capability_type' => $this->capabilityType,
+
+            'map_meta_cap'    => true,
+
             'rewrite'         => $this->public
                 ? [
                     'slug' => $this->rewriteSlug ?? $this->postType,
@@ -149,7 +184,7 @@ abstract class PostType implements PostTypeInterface
                 : false,
         ];
     }
-    
+
     /**
      * Build labels.
      */
@@ -160,15 +195,50 @@ abstract class PostType implements PostTypeInterface
             [
                 'name'               => $this->plural,
                 'singular_name'      => $this->singular,
+                'menu_name'          => $this->plural,
+                'name_admin_bar'     => $this->singular,
+
                 'add_new'            => __('Add New', 'wildtours-plugin'),
-                'add_new_item'       => sprintf(__('Add New %s', 'wildtours-plugin'), $this->singular),
-                'edit_item'          => sprintf(__('Edit %s', 'wildtours-plugin'), $this->singular),
-                'new_item'           => sprintf(__('New %s', 'wildtours-plugin'), $this->singular),
-                'view_item'          => sprintf(__('View %s', 'wildtours-plugin'), $this->singular),
-                'search_items'       => sprintf(__('Search %s', 'wildtours-plugin'), $this->plural),
-                'not_found'          => sprintf(__('No %s found.', 'wildtours-plugin'), strtolower($this->plural)),
-                'not_found_in_trash' => sprintf(__('No %s found in Trash.', 'wildtours-plugin'), strtolower($this->plural)),
-                'all_items'          => sprintf(__('All %s', 'wildtours-plugin'), $this->plural),
+
+                'add_new_item'       => sprintf(
+                    __('Add New %s', 'wildtours-plugin'),
+                    $this->singular
+                ),
+
+                'edit_item'          => sprintf(
+                    __('Edit %s', 'wildtours-plugin'),
+                    $this->singular
+                ),
+
+                'new_item'           => sprintf(
+                    __('New %s', 'wildtours-plugin'),
+                    $this->singular
+                ),
+
+                'view_item'          => sprintf(
+                    __('View %s', 'wildtours-plugin'),
+                    $this->singular
+                ),
+
+                'search_items'       => sprintf(
+                    __('Search %s', 'wildtours-plugin'),
+                    $this->plural
+                ),
+
+                'not_found'          => sprintf(
+                    __('No %s found.', 'wildtours-plugin'),
+                    strtolower($this->plural)
+                ),
+
+                'not_found_in_trash' => sprintf(
+                    __('No %s found in Trash.', 'wildtours-plugin'),
+                    strtolower($this->plural)
+                ),
+
+                'all_items'          => sprintf(
+                    __('All %s', 'wildtours-plugin'),
+                    $this->plural
+                ),
             ]
         );
     }
