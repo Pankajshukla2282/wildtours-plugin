@@ -52,6 +52,26 @@ if (is_array($statusRows)) {
 	}
 }
 
+// Also query normalized bookings table for comprehensive counting
+$normalizedRows = $wpdb->get_results(
+	"SELECT status, COUNT(*) AS total
+	FROM {$wpdb->prefix}pwt_bookings
+	WHERE status IN ('pending_payment', 'verification_pending', 'partial_paid', 'paid', 'failed', 'cancelled')
+	GROUP BY status"
+);
+
+if (is_array($normalizedRows)) {
+	foreach ($normalizedRows as $row) {
+		$status = (string) ($row->status ?? '');
+		if ($status !== '' && isset($statusCounts[$status])) {
+			// Use normalized count if available, otherwise keep legacy count
+			if ($statusCounts[$status] === 0) {
+				$statusCounts[$status] = (int) ($row->total ?? 0);
+			}
+		}
+	}
+}
+
 $topPackageRows = $wpdb->get_results(
 	"SELECT pm.meta_value AS package_id, COUNT(*) AS total
 	FROM {$wpdb->postmeta} pm

@@ -1,0 +1,104 @@
+.pwt-calendar-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+    margin: 20px 0;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid #dcdcde;
+}
+
+.pwt-calendar-filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pwt-calendar-filters label span {
+    font-weight: 600;
+}
+
+.pwt-calendar-header {
+    margin: 20px 0 12px;
+}
+
+.pwt-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(120px, 1fr));
+    gap: 1px;
+    background: #dcdcde;
+    border: 1px solid #dcdcde;
+}
+
+.pwt-calendar-weekday {
+    padding: 12px;
+    background: #f6f7f7;
+    text-align: center;
+    font-weight: 600;
+}
+
+.pwt-calendar-empty {
+    min-height: 145px;
+    background: #fff;
+}
+
+.pwt-calendar-day {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 145px;
+    padding: 12px;
+    background: #fff;
+    color: #1d2327;
+    text-decoration: none;
+    border-left: 4px solid #72aee6;
+}
+
+.pwt-calendar-day:hover {
+    color: #1d2327;
+    box-shadow: inset 0 0 0 2px #2271b1;
+}
+
+.pwt-calendar-date {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.pwt-calendar-remaining {
+    font-size: 18px;
+}
+
+.pwt-calendar-meta {
+    font-size: 12px;
+    color: #50575e;
+}
+
+.pwt-open {
+    border-left-color: #00a32a;
+}
+
+.pwt-warning {
+    border-left-color: #dba617;
+}
+
+.pwt-sold-out {
+    border-left-color: #d63638;
+    opacity: 0.85;
+}
+
+@media screen and (max-width: 1000px) {
+    .pwt-calendar-grid {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+    }
+
+    .pwt-calendar-weekday {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .pwt-calendar-grid {
+        grid-template-columns: 1fr;
+    }
+}

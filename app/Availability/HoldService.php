@@ -1,8 +1,12 @@
 <?php
+
 declare(strict_types=1);
+
 namespace PWT\Availability;
+
 defined('ABSPATH') || exit;
 
+use DateTimeImmutable;
 use PWT\Bookings\BookingItemRepository;
 use PWT\Core\Database\Transaction;
 
@@ -12,113 +16,333 @@ final class HoldService
         private readonly HoldRepository $holds,
         private readonly AvailabilityRepository $availability,
         private readonly BookingItemRepository $items
-    ) {}
+    ) {
+    }
 
-    public function holdBooking(int $bookingId, int $ttlSeconds = 900): bool
-    {
+    /**
+     * Create inventory holds for every allocatable date of every
+     * booking item.
+     */
+    public function holdBooking(
+        int $bookingId,
+        int $ttlSeconds = 900
+    ): bool {
         $items = $this->items->byBooking($bookingId);
+
         if (!$items) {
             return false;
         }
 
-        return Transaction::run(function () use ($bookingId, $items, $ttlSeconds): bool {
-            $held = [];
-            foreach ($items as $item) {
-                $resourceId = absint($item['object_id'] ?? 0);
-                $resourceType = (string)($item['item_type'] ?? '');
-                $start = (string)($item['start_date'] ?? '');
-                $end = (string)($item['end_date'] ?? $start);
-                $quantity = max(1, (int)($item['quantity'] ?? 1));
+        return Transaction::run(
+            function () use (
+                $bookingId,
+                $items,
+                $ttlSeconds
+            ): bool {
+                $createdHoldIds = [];
 
-                if (!$resourceId || !$resourceType || $start === '') {
-                    continue;
-                }
+                foreach ($items as $item) {
+                    $resourceId = absint(
+                        $item['object_id'] ?? 0
+                    );
 
-                foreach ($this->serviceDates($start, $end) as $date) {
-                    if (!$this->availability->check($resourceId, $resourceType, $date, $quantity)['available']) {
-                        $this->releaseHeld($held);
+                    $resourceType = sanitize_key(
+                        (string) (
+                            $item['item_type'] ?? ''
+                        )
+                    );
+
+                    $quantity = max(
+                        1,
+                        (int) (
+                            $item['quantity'] ?? 1
+                        )
+                    );
+
+                    if (
+                        !$resourceId
+                        || $resourceType === ''
+                    ) {
+                        $this->rollbackHolds($createdHoldIds);
+
                         return false;
                     }
-                    if (!$this->availability->reserve($resourceId, $resourceType, $date, $quantity)) {
-                        $this->releaseHeld($held);
+
+                    $dates = $this->allocationDates(
+                        (string) (
+                            $item['start_date'] ?? ''
+                        ),
+                        (string) (
+                            $item['end_date'] ?? ''
+                        )
+                    );
+
+                    if (!$dates) {
+                        $this->rollbackHolds($createdHoldIds);
+
                         return false;
                     }
-                    $held[] = [$resourceId, $resourceType, $date, $quantity];
-                    $this->holds->create($bookingId, $resourceId, $resourceType, $date, $quantity, $ttlSeconds);
+
+                    foreach ($dates as $date) {
+                        /*
+                         * Check availability before creating the hold.
+                         *
+                         * AvailabilityRepository::check() includes:
+                         * - reserved inventory
+                         * - blocked inventory
+                         * - active holds from other bookings
+                         */
+                        $availability = $this->availability->check(
+                            $resourceId,
+                            $resourceType,
+                            $date,
+                            $quantity
+                        );
+
+                        if (
+                            empty($availability['available'])
+                        ) {
+                            $this->rollbackHolds(
+                                $createdHoldIds
+                            );
+
+                            return false;
+                        }
+
+                        $holdId = $this->holds->create(
+                            $bookingId,
+                            $resourceId,
+                            $resourceType,
+                            $date,
+                            $quantity,
+                            $ttlSeconds
+                        );
+
+                        if (!$holdId) {
+                            $this->rollbackHolds(
+                                $createdHoldIds
+                            );
+
+                            return false;
+                        }
+
+                        $createdHoldIds[] = $holdId;
+
+                        /*
+                         * Clear the cached availability state so
+                         * subsequent checks in this request do not
+                         * use stale inventory data.
+                         */
+                        $this->availability->flush(
+                            $resourceId,
+                            $resourceType,
+                            $date
+                        );
+                    }
                 }
+
+                return true;
             }
+        );
+    }
 
+    /**
+     * Release all active holds belonging to a booking.
+     *
+     * This is used when:
+     * - a booking is cancelled before confirmation
+     * - a booking expires
+     * - confirmation converts holds into reservations
+     * - booking creation needs cleanup
+     */
+    public function releaseBooking(
+        int $bookingId,
+        string $status = 'released'
+    ): bool {
+        $activeHolds = $this->holds->activeForBooking(
+            $bookingId
+        );
+
+        if (!$activeHolds) {
             return true;
-        });
-    }
-
-    public function confirmBooking(int $bookingId): int
-    {
-        return $this->holds->confirmBooking($bookingId);
-    }
-
-    public function releaseBooking(int $bookingId, string $status = 'released'): int
-    {
-        $active = $this->holds->activeForBooking($bookingId);
-        if (!$active) {
-            return 0;
         }
 
-        return Transaction::run(function () use ($bookingId, $active, $status): int {
-            foreach ($active as $hold) {
-                $this->availability->release(
-                    (int)$hold['resource_id'],
-                    (string)$hold['resource_type'],
-                    (string)$hold['service_date'],
-                    (int)$hold['quantity']
+        return Transaction::run(
+            function () use (
+                $bookingId,
+                $status,
+                $activeHolds
+            ): bool {
+                $result = $this->holds->releaseBooking(
+                    $bookingId,
+                    $status
                 );
-            }
 
-            return $this->holds->releaseBooking($bookingId, $status);
-        });
+                if ($result === false) {
+                    return false;
+                }
+
+                foreach ($activeHolds as $hold) {
+                    $this->availability->flush(
+                        absint(
+                            $hold['resource_id'] ?? 0
+                        ),
+                        sanitize_key(
+                            (string) (
+                                $hold['resource_type'] ?? ''
+                            )
+                        ),
+                        sanitize_text_field(
+                            (string) (
+                                $hold['service_date'] ?? ''
+                            )
+                        )
+                    );
+                }
+
+                return true;
+            }
+        );
     }
 
+    /**
+     * Expire all holds whose expiration time has passed.
+     */
     public function expireExpired(): int
     {
         $expired = $this->holds->activeExpired();
+
         if (!$expired) {
             return 0;
         }
 
-        return Transaction::run(function () use ($expired): int {
-            foreach ($expired as $hold) {
-                $this->availability->release(
-                    (int)$hold['resource_id'],
-                    (string)$hold['resource_type'],
-                    (string)$hold['service_date'],
-                    (int)$hold['quantity']
-                );
+        $ids = [];
+        $resources = [];
+
+        foreach ($expired as $hold) {
+            $holdId = absint(
+                $hold['id'] ?? 0
+            );
+
+            if ($holdId) {
+                $ids[] = $holdId;
             }
 
-            return $this->holds->expireIds(array_column($expired, 'id'));
-        });
+            $resources[] = [
+                'resource_id' => absint(
+                    $hold['resource_id'] ?? 0
+                ),
+                'resource_type' => sanitize_key(
+                    (string) (
+                        $hold['resource_type'] ?? ''
+                    )
+                ),
+                'service_date' => sanitize_text_field(
+                    (string) (
+                        $hold['service_date'] ?? ''
+                    )
+                ),
+            ];
+        }
+
+        if (!$ids) {
+            return 0;
+        }
+
+        $updated = $this->holds->expireIds($ids);
+
+        if ($updated > 0) {
+            foreach ($resources as $resource) {
+                if (
+                    !$resource['resource_id']
+                    || $resource['resource_type'] === ''
+                    || $resource['service_date'] === ''
+                ) {
+                    continue;
+                }
+
+                $this->availability->flush(
+                    $resource['resource_id'],
+                    $resource['resource_type'],
+                    $resource['service_date']
+                );
+            }
+        }
+
+        return $updated;
     }
 
     /**
-     * @param array<int, array{0:int,1:string,2:string,3:int}> $held
+     * @return string[]
      */
-    /** @return array<int,string> */
-    private function serviceDates(string $start, string $end): array
-    {
-        try { $from = new \DateTimeImmutable($start); $to = new \DateTimeImmutable($end ?: $start); } catch (\Throwable) { return [$start]; }
-        if ($to < $from) { $to = $from; }
-        // End date is exclusive for multi-day stays, but single-day services reserve once.
-        $exclusive = $to > $from;
-        $last = $exclusive ? $to->modify('-1 day') : $to;
+    private function allocationDates(
+        string $start,
+        string $end
+    ): array {
+        $start = sanitize_text_field($start);
+        $end = sanitize_text_field($end);
+
+        if ($start === '') {
+            return [];
+        }
+
+        if ($end === '') {
+            $end = $start;
+        }
+
+        try {
+            $from = new DateTimeImmutable($start);
+            $to = new DateTimeImmutable($end);
+        } catch (\Throwable) {
+            return [];
+        }
+
+        if ($to < $from) {
+            return [];
+        }
+
+        /*
+         * Same-day booking/service.
+         */
+        if ($to == $from) {
+            return [
+                $from->format('Y-m-d'),
+            ];
+        }
+
+        /*
+         * Multi-day booking.
+         *
+         * End date is exclusive:
+         *
+         * 10 Aug -> 13 Aug
+         * consumes 10, 11 and 12.
+         */
         $dates = [];
-        for ($d=$from; $d <= $last; $d=$d->modify('+1 day')) { $dates[] = $d->format('Y-m-d'); }
-        return $dates ?: [$from->format('Y-m-d')];
+
+        for (
+            $date = $from;
+            $date < $to;
+            $date = $date->modify('+1 day')
+        ) {
+            $dates[] = $date->format('Y-m-d');
+        }
+
+        return $dates;
     }
 
-    private function releaseHeld(array $held): void
-    {
-        foreach ($held as [$resourceId, $resourceType, $date, $quantity]) {
-            $this->availability->release($resourceId, $resourceType, $date, $quantity);
+    /**
+     * Roll back holds created during a failed hold operation.
+     *
+     * @param int[] $holdIds
+     */
+    private function rollbackHolds(
+        array $holdIds
+    ): void {
+        if (!$holdIds) {
+            return;
         }
+
+        $this->holds->expireIds($holdIds);
     }
 }

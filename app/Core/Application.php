@@ -10,6 +10,7 @@ use PWT\REST\BookingRestServiceProvider;
 use PWT\Reporting\ReportingServiceProvider;
 use PWT\Payments\PaymentServiceProvider;
 use PWT\Availability\InventoryServiceProvider;
+use PWT\Packages\PackageServiceProvider;
 use PWT\Admin\AdminServiceProvider;
 use PWT\Analytics\AnalyticsServiceProvider;
 use PWT\API\ApiServiceProvider;
@@ -43,6 +44,7 @@ final class Application
         ReportingServiceProvider::class,
         PaymentServiceProvider::class,
         InventoryServiceProvider::class,
+        PackageServiceProvider::class,
         ArchitectureServiceProvider::class,
         ServiceServiceProvider::class,
         CustomerServiceProvider::class,
