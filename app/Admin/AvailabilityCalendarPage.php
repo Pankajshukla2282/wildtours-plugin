@@ -11,26 +11,15 @@ use PWT\Core\Database\Schema;
 
 final class AvailabilityCalendarPage
 {
-    public function __construct(
-        private readonly AvailabilityRepository $availability
-    ) {
+    public function __construct()
+    {
     }
 
     public function register(): void
     {
-        add_submenu_page(
-            'pwt-dashboard',
-            __('Availability Calendar', 'wildtours-plugin'),
-            __('Availability Calendar', 'wildtours-plugin'),
-            'manage_options',
-            'pwt-availability-calendar',
-            [$this, 'render']
-        );
-
-        add_action(
-            'admin_enqueue_scripts',
-            [$this, 'enqueueAssets']
-        );
+        // Note: Availability Calendar is already provided by OperationsDashboard
+        // at admin.php?page=pwt-availability. This class is kept for backward
+        // compatibility but does not register a new submenu page.
     }
 
     public function enqueueAssets(

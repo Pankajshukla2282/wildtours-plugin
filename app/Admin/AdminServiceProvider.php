@@ -12,10 +12,6 @@ final class AdminServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->singleton(
-            AvailabilityCalendarPage::class,
-            AvailabilityCalendarPage::class
-        );
     }
 
     public function boot(): void
@@ -31,9 +27,5 @@ final class AdminServiceProvider extends ServiceProvider
         (new Settings())->register();
 
         (new ContentSeeder())->register();
-
-        $this->make(
-            AvailabilityCalendarPage::class
-        )->register();
     }
 }
