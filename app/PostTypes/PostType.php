@@ -142,12 +142,14 @@ abstract class PostType implements PostTypeInterface
             'taxonomies'      => $this->taxonomies,
             'has_archive'     => $this->hasArchive,
             'capability_type' => $this->capabilityType,
-            'rewrite'         => [
-                'slug' => $this->rewriteSlug ?? $this->postType,
-            ],
+            'rewrite'         => $this->public
+                ? [
+                    'slug' => $this->rewriteSlug ?? $this->postType,
+                ]
+                : false,
         ];
     }
-
+    
     /**
      * Build labels.
      */

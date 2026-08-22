@@ -8,44 +8,60 @@ defined('ABSPATH') || exit;
 
 /**
  * Booking custom post type.
- *
- * Stores booking requests created through the booking form, the REST
- * endpoint or the admin. Internal only - not publicly queryable.
  */
 final class Booking extends PostType
 {
+    /**
+     * Post type slug.
+     */
     protected string $postType = 'pwt_booking';
 
+    /**
+     * Singular label.
+     */
     protected string $singular = 'Booking';
 
+    /**
+     * Plural label.
+     */
     protected string $plural = 'Bookings';
 
+    /**
+     * Supported editor features.
+     *
+     * @var string[]
+     */
+    protected array $supports = [
+        'title',
+    ];
+
+    /**
+     * Menu icon.
+     */
     protected string $menuIcon = 'dashicons-calendar-alt';
 
+    /**
+     * Menu position.
+     */
+    protected int $menuPosition = 25;
+
+    /**
+     * Whether the post type is public.
+     */
     protected bool $public = false;
 
-    protected bool $showInRest = false;
+    /**
+     * Whether REST API is enabled.
+     */
+    protected bool $showInRest = true;
 
+    /**
+     * Whether archives are enabled.
+     */
     protected bool $hasArchive = false;
 
     /**
-     * Build post type arguments.
+     * Rewrite slug.
      */
-    protected function args(): array
-    {
-        return [
-            'labels'          => $this->labels(),
-            'public'          => false,
-            'show_ui'         => true,
-            'show_in_menu'    => true,
-            'show_in_rest'    => false,
-            'menu_position'   => $this->menuPosition,
-            'menu_icon'       => $this->menuIcon,
-            'supports'        => ['title'],
-            'capability_type' => 'post',
-            'has_archive'     => false,
-            'exclude_from_search' => true,
-            'rewrite'         => false,
-        ];
-    }
+    protected ?string $rewriteSlug = null;
 }
