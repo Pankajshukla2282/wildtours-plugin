@@ -11,4 +11,12 @@ final class LocalTrip extends PostType
     protected string $menuIcon = 'dashicons-location-alt';
     protected ?string $rewriteSlug = 'local-trips';
     protected array $taxonomies = ['pwt_trip_type', 'pwt_activity'];
+
+    protected function args(): array
+    {
+        $args = parent::args();
+        $args['show_in_menu'] = false;
+
+        return $args;
+    }
 }

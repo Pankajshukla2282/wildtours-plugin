@@ -64,4 +64,12 @@ final class Booking extends PostType
      * Rewrite slug.
      */
     protected ?string $rewriteSlug = null;
+
+    protected function args(): array
+    {
+        $args = parent::args();
+        $args['show_in_menu'] = false;
+
+        return $args;
+    }
 }
