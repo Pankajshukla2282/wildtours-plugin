@@ -27,7 +27,7 @@ final class VendorsAdminPage
     public function menus(): void
     {
         add_submenu_page(
-            'pwt-dashboard',
+            PWT_ADMIN_MENU_SLUG,
             __('Vendors', 'wildtours-plugin'),
             __('Vendors', 'wildtours-plugin'),
             self::CAP,
@@ -335,13 +335,18 @@ final class VendorsAdminPage
     {
         $this->guard('pwt_vendor_settlement');
         $vendorId = absint($_POST['vendor_id'] ?? 0);
+        $amount = max(0, (float)($_POST['amount'] ?? 0));
+        $settledAt = sanitize_text_field((string)($_POST['settled_at'] ?? ''));
+        if (!$this->vendors->find($vendorId) || $amount <= 0 || ($settledAt !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}/', $settledAt))) {
+            $this->redirectError($this->vendorUrl($vendorId), __('Enter a valid vendor, positive amount and settlement date.', 'wildtours-plugin'));
+        }
         $created = $this->settlements->create([
             'vendor_id' => $vendorId,
             'booking_id' => absint($_POST['booking_id'] ?? 0),
-            'amount' => (float)($_POST['amount'] ?? 0),
+            'amount' => $amount,
             'currency' => (string)($_POST['currency'] ?? 'INR'),
             'reference' => (string)($_POST['reference'] ?? ''),
-            'settled_at' => sanitize_text_field((string)($_POST['settled_at'] ?? '')),
+            'settled_at' => $settledAt,
             'notes' => (string)($_POST['notes'] ?? ''),
         ]);
         $this->redirectResult($this->vendorUrl($vendorId), $created > 0, __('Settlement recorded.', 'wildtours-plugin'));

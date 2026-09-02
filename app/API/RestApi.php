@@ -70,7 +70,7 @@ class RestApi
             return $throttle;
         }
 
-        if (is_user_logged_in() && current_user_can('edit_posts')) {
+        if (is_user_logged_in() && current_user_can('pwt_manage_operations')) {
             return true;
         }
 
@@ -96,7 +96,7 @@ class RestApi
 
     public function canManageBookings(\WP_REST_Request $request): bool|\WP_Error
     {
-        return is_user_logged_in() && current_user_can('edit_posts')
+        return is_user_logged_in() && current_user_can('pwt_manage_operations')
             ? true
             : new \WP_Error(
                 'pwt_rest_forbidden',

@@ -15,7 +15,23 @@ final class BookingDataRepository
     {
         global $wpdb;
         $t = Schema::tables()['bookings'];
-        $number = 'PWT-' . gmdate('Ymd') . '-' . strtoupper(wp_generate_password(6, false, false));
+        $number = '';
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $candidate = 'PWT-' . gmdate('Ymd') . '-' . strtoupper(wp_generate_password(8, false, false));
+            $exists = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$t} WHERE booking_number = %s",
+                $candidate
+            ));
+            if ($exists === 0) {
+                $number = $candidate;
+                break;
+            }
+        }
+
+        if ($number === '') {
+            return 0;
+        }
+
         $now = current_time('mysql');
 
         $wpdb->insert($t, [

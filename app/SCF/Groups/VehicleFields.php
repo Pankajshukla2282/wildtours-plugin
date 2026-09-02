@@ -73,6 +73,23 @@ final class VehicleFields extends FieldGroup
                     'type'  => 'textarea',
                 ],
 
+                [
+                    'key' => 'field_pwt_vehicle_vendor',
+                    'label' => __('Preferred Vendor', 'wildtours-plugin'),
+                    'name' => 'vendor_id',
+                    'type' => 'post_object',
+                    'post_type' => ['pwt_vendor'],
+                    'return_format' => 'id',
+                ],
+
+                [
+                    'key' => 'field_pwt_vehicle_bookable',
+                    'label' => __('Available for Package Booking', 'wildtours-plugin'),
+                    'name' => 'bookable',
+                    'type' => 'true_false',
+                    'default_value' => 1,
+                ],
+
             ],
         ]);
     }

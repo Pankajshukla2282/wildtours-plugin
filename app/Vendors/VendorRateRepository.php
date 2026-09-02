@@ -52,12 +52,13 @@ final class VendorRateRepository
     {
         global $wpdb;
         $row = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM " . Schema::tables()['vendor_rates'] . "
-             WHERE status='active'
-               AND resource_type=%s AND resource_id=%d
-               AND (start_date IS NULL OR start_date <= %s)
-               AND (end_date IS NULL OR end_date >= %s)
-             ORDER BY priority ASC, id ASC LIMIT 1",
+            "SELECT vr.* FROM " . Schema::tables()['vendor_rates'] . " vr
+             INNER JOIN " . Schema::tables()['vendors'] . " v ON v.id = vr.vendor_id AND v.status='active'
+             WHERE vr.status='active'
+               AND vr.resource_type=%s AND vr.resource_id=%d
+               AND (vr.start_date IS NULL OR vr.start_date <= %s)
+               AND (vr.end_date IS NULL OR vr.end_date >= %s)
+             ORDER BY vr.priority ASC, vr.id ASC LIMIT 1",
             sanitize_key($resourceType),
             $resourceId,
             sanitize_text_field($date),

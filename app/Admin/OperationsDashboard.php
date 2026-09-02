@@ -32,17 +32,17 @@ final class OperationsDashboard
         add_action('admin_post_pwt_booking_action', [$this, 'handleBookingAction']);
         add_action('admin_post_pwt_availability_bulk', [$this, 'handleAvailabilityBulk']);
         add_action('admin_post_pwt_sync_booking_calendar_manual', [$this, 'handleBookingCalendarImport']);
+        add_action('admin_post_pwt_bulk_booking_action', [$this, 'handleBulkBookingAction']);
     }
 
     public function menus(): void
     {
-        add_submenu_page('pwt-dashboard', __('Operations','wildtours-plugin'), __('Operations','wildtours-plugin'), 'pwt_manage_operations', 'pwt-operations', [$this,'operations']);
-        add_submenu_page('pwt-dashboard', __('Availability','wildtours-plugin'), __('Availability','wildtours-plugin'), 'pwt_manage_operations', 'pwt-availability', [$this,'availability']);
-        add_submenu_page('pwt-dashboard', __('Pricing','wildtours-plugin'), __('Pricing','wildtours-plugin'), 'pwt_manage_operations', 'pwt-pricing', [$this,'pricing']);
-        add_submenu_page('pwt-dashboard', __('Customers','wildtours-plugin'), __('Customers','wildtours-plugin'), 'pwt_manage_operations', 'pwt-customers', [$this,'customers']);
+        add_submenu_page(PWT_ADMIN_MENU_SLUG, __('Operations','wildtours-plugin'), __('Operations','wildtours-plugin'), 'pwt_manage_operations', 'pwt-operations', [$this,'operations']);
+        add_submenu_page(PWT_ADMIN_MENU_SLUG, __('Availability','wildtours-plugin'), __('Availability','wildtours-plugin'), 'pwt_manage_operations', 'pwt-availability', [$this,'availability']);
+        add_submenu_page(PWT_ADMIN_MENU_SLUG, __('Pricing','wildtours-plugin'), __('Pricing','wildtours-plugin'), 'pwt_manage_operations', 'pwt-pricing', [$this,'pricing']);
     }
 
-    public function operations(): void
+public function operations(): void
     {
         global $wpdb;
         $t = Schema::tables();
@@ -52,6 +52,7 @@ final class OperationsDashboard
             'confirmed' => (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$t['bookings']} WHERE status IN (%s,%s)",'confirmed','paid')),
             'customers' => (int)$wpdb->get_var("SELECT COUNT(*) FROM {$t['customers']}"),
             'payments' => (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$t['payments']} WHERE status=%s",'paid')),
+            'refunded' => (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$t['payments']} WHERE status=%s",'refunded')),
         ];
 
         if (isset($_GET['pwt_notice'])) {
@@ -61,9 +62,15 @@ final class OperationsDashboard
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Panna Wild Tour Operations','wildtours-plugin'); ?></h1>
-            <div class="pwt-admin-cards">
-            <?php foreach ($counts as $label=>$value): ?>
-                <div class="pwt-admin-card"><strong><?php echo esc_html(number_format_i18n($value)); ?></strong><span><?php echo esc_html(ucwords(str_replace('_',' ',$label))); ?></span></div>
+            <?php $statusLabels = [
+                'pending'   => __('Pending', 'wildtours-plugin'),
+                'confirmed' => __('Confirmed', 'wildtours-plugin'),
+                'paid'      => __('Paid', 'wildtours-plugin'),
+                'refunded'  => __('Refunded', 'wildtours-plugin'),
+            ]; ?>
+        <div class="pwt-admin-cards">
+            <?php foreach ($counts as $key => $value): ?>
+                <div class="pwt-admin-card"><strong><?php echo esc_html(number_format_i18n($value)); ?></strong><span><?php echo esc_html($statusLabels[$key] ?? ucwords(str_replace('_',' ',$key))); ?></span></div>
             <?php endforeach; ?>
             </div>
             <h2><?php esc_html_e('Quick Actions','wildtours-plugin'); ?></h2>
@@ -71,9 +78,26 @@ final class OperationsDashboard
                 <a class="button button-primary" href="<?php echo esc_url(admin_url('edit.php?post_type=pwt_booking')); ?>"><?php esc_html_e('Manage Bookings','wildtours-plugin'); ?></a>
                 <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=pwt-availability')); ?>"><?php esc_html_e('Availability Calendar','wildtours-plugin'); ?></a>
                 <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=pwt-pricing')); ?>"><?php esc_html_e('Pricing','wildtours-plugin'); ?></a>
-                <a class="button" href="<?php echo esc_url(admin_url('edit.php?post_type=pwt_room_unit')); ?>"><?php esc_html_e('Manage Rooms','wildtours-plugin'); ?></a>
-                <a class="button" href="<?php echo esc_url(admin_url('edit.php?post_type=pwt_safari_schedule')); ?>"><?php esc_html_e('Manage Safari Schedules','wildtours-plugin'); ?></a>
+                <a class="button" href="<?php echo esc_url(admin_url('edit.php?post_type=pwt_room_unit')); ?>><?php esc_html_e('Manage Rooms','wildtours-plugin'); ?></a>
+                <a class="button" href="<?php echo esc_url(admin_url('edit.php?post_type=pwt_safari_schedule')); ?>><?php esc_html_e('Manage Safari Schedules','wildtours-plugin'); ?></a>
             </p>
+
+            <h2><?php esc_html_e('Bulk Actions','wildtours-plugin'); ?></h2>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <input type="hidden" name="action" value="pwt_bulk_booking_action">
+                <?php wp_nonce_field('pwt_bulk_booking_action', '_wpnonce'); ?>
+                <input type="hidden" name="pwt_action" value="confirm">
+                <select name="booking_ids[]" multiple="multiple" style="width:100%; min-height:150px;">
+                    <?php foreach ($rows as $r): ?>
+                        <option value="<?php echo esc_attr($r['id']); ?>"><?php echo esc_html($r['booking_number'] . ' - ' . ($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? '')); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <br>
+                <label><input type="radio" name="pwt_action" value="confirm" checked> <?php esc_html_e('Confirm selected'); ?></label>
+                <label><input type="radio" name="pwt_action" value="cancel"> <?php esc_html_e('Cancel selected'); ?></label>
+                <label><input type="radio" name="pwt_action" value="refund"> <?php esc_html_e('Refund selected'); ?></label>
+                <button class="button button-primary" type="submit"><?php esc_html_e('Apply'); ?></button>
+            </form>
             <?php $this->bookingTable(); ?>
         </div>
         <?php
@@ -270,6 +294,85 @@ final class OperationsDashboard
         exit;
     }
 
+    public function handleBulkBookingAction(): void
+    {
+        $nonce = (string) ($_REQUEST['_wpnonce'] ?? '');
+        if (!wp_verify_nonce($nonce, 'pwt_bulk_booking_action')) {
+            wp_die(__('Security check failed.', 'wildtours-plugin'));
+        }
+        if (!current_user_can('pwt_manage_operations')) {
+            wp_die(__('You do not have permission to do this.', 'wildtours-plugin'));
+        }
+
+        $action = sanitize_key((string) ($_REQUEST['pwt_action'] ?? ''));
+        $bookingIds = isset($_REQUEST['booking_ids']) ? array_map('absint', $_REQUEST['booking_ids']) : [];
+        $redirect = admin_url('admin.php?page=pwt-operations');
+
+        if (empty($bookingIds)) {
+            $this->redirectError($redirect, __('No bookings selected.', 'wildtours-plugin'));
+        }
+
+        $successCount = 0;
+        $errorCount = 0;
+
+        foreach ($bookingIds as $bookingId) {
+            switch ($action) {
+                case 'confirm':
+                    $result = $this->orchestrator->confirm($bookingId);
+                    if (is_wp_error($result)) {
+                        $errorCount++;
+                    } else {
+                        $successCount++;
+                    }
+                    break;
+
+                case 'cancel':
+                    $result = $this->orchestrator->cancel($bookingId);
+                    if (is_wp_error($result)) {
+                        $errorCount++;
+                    } else {
+                        $successCount++;
+                    }
+                    break;
+
+                case 'refund':
+                    $balance = $this->payments->balance($bookingId);
+                    if ((float) $balance['net_paid'] > 0) {
+                        $result = $this->payments->recordRefund([
+                            'booking_id' => $bookingId,
+                            'amount' => (float) $balance['net_paid'],
+                            'provider' => 'manual',
+                        ]);
+                        if (is_wp_error($result)) {
+                            $errorCount++;
+                        } else {
+                            $successCount++;
+                        }
+                    } else {
+                        $errorCount++;
+                    }
+                    break;
+            }
+        }
+
+        $message = sprintf(
+            /* translators: %d: number of successful actions */
+            _n('%d booking updated.', '%d bookings updated.', $successCount, 'wildtours-plugin'),
+            $successCount
+        );
+
+        if ($errorCount > 0) {
+            $message .= ' ' . sprintf(
+                /* translators: %d: number of failed actions */
+                _n('%d booking failed.', '%d bookings failed.', $errorCount, 'wildtours-plugin'),
+                $errorCount
+            );
+        }
+
+        wp_safe_redirect(add_query_arg(['pwt_notice' => 'success', 'pwt_msg' => urlencode($message)], $url));
+        exit;
+    }
+
     public function availability(): void
     {
         $this->availabilityCalendar();
@@ -285,6 +388,7 @@ final class OperationsDashboard
         $year = max(2000, min(2100, absint($_GET['year'] ?? gmdate('Y'))));
         $resourceType = sanitize_key((string) ($_GET['resource_type'] ?? 'room_unit'));
         $resourceId = absint($_GET['resource_id'] ?? 0);
+        $capacityStatus = sanitize_key((string) ($_GET['capacity_status'] ?? ''));
 
         $resourceTypes = ['room_unit', 'safari_schedule', 'vehicle'];
 
@@ -294,10 +398,16 @@ final class OperationsDashboard
         $next = strtotime($first . ' +1 month');
 
         $daysInMonth = (int) gmdate('t', $startTs);
-        $rows = $resourceId ? ($wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$t['availability']} WHERE resource_type=%s AND resource_id=%d AND service_date BETWEEN %s AND %s",
-            $resourceType, $resourceId, $first, sprintf('%04d-%02d-%02d', $year, $month, $daysInMonth)
-        ), ARRAY_A) ?: []) : [];
+        $where = "resource_type=%s AND resource_id=%d AND service_date BETWEEN %s AND %s";
+        $params = [$resourceType, $resourceId, $first, sprintf('%04d-%02d-%02d', $year, $month, $daysInMonth)];
+        if ($capacityStatus === 'full') {
+            $where .= " AND reserved >= capacity";
+        } elseif ($capacityStatus === 'open') {
+            $where .= " AND reserved < capacity AND blocked = 0";
+        } elseif ($capacityStatus === 'blocked') {
+            $where .= " AND blocked = 1";
+        }
+        $rows = $resourceId ? ($wpdb->get_results($wpdb->prepare($where, $params), ARRAY_A) ?: []) : [];
 
         $dayMap = [];
         foreach ($rows as $r) {
@@ -322,6 +432,14 @@ final class OperationsDashboard
                 </label>
                 <label><?php esc_html_e('Resource ID', 'wildtours-plugin'); ?>
                     <input type="number" name="resource_id" value="<?php echo esc_attr($resourceId ?: ''); ?>" min="0" placeholder="All">
+                </label>
+                <label><?php esc_html_e('Capacity status', 'wildtours-plugin'); ?>
+                    <select name="capacity_status">
+                        <option value=""><?php esc_html_e('All', 'wildtours-plugin'); ?></option>
+                        <option value="full" <?php selected($capacityStatus, 'full'); ?>><?php esc_html_e('Full (reserved >= capacity)', 'wildtours-plugin'); ?></option>
+                        <option value="open" <?php selected($capacityStatus, 'open'); ?>><?php esc_html_e('Open (available)', 'wildtours-plugin'); ?></option>
+                        <option value="blocked" <?php selected($capacityStatus, 'blocked'); ?>><?php esc_html_e('Blocked', 'wildtours-plugin'); ?></option>
+                    </select>
                 </label>
                 <button class="button"><?php esc_html_e('Show', 'wildtours-plugin'); ?></button>
             </form>
@@ -411,10 +529,20 @@ final class OperationsDashboard
 
     public function customers(): void
     {
-        global $wpdb;
-        $rows = $wpdb->get_results("SELECT c.*, COUNT(b.id) AS booking_count FROM ".Schema::tables()['customers']." c LEFT JOIN ".Schema::tables()['bookings']." b ON b.customer_id=c.id GROUP BY c.id ORDER BY c.created_at DESC LIMIT 100", ARRAY_A) ?: [];
+        $search = sanitize_text_field((string) ($_GET['search'] ?? ''));
+        $rows = $wpdb->get_results("SELECT c.*, COUNT(b.id) AS booking_count FROM ".Schema::tables()['customers']." c LEFT JOIN ".Schema::tables()['bookings']." b ON b.customer_id=c.id " . ($search ? $wpdb->prepare("WHERE c.first_name LIKE %s OR c.last_name LIKE %s OR c.email LIKE %s", "%$search%" , "%$search%" , "%$search%") : '') . " GROUP BY c.id ORDER BY c.created_at DESC LIMIT 100", ARRAY_A) ?: [];
         ?>
         <div class="wrap"><h1><?php esc_html_e('Customers','wildtours-plugin'); ?></h1>
+        <?php if ($search): ?>
+            <p><?php esc_html_e('Search results for:', 'wildtours-plugin'); ?> "<?php echo esc_html($search) ?>"</p>
+        <?php endif; ?>
+        <form method="get" style="margin:12px 0; max-width:400px;">
+            <input type="hidden" name="page" value="pwt-customers">
+            <label><?php esc_html_e('Search', 'wildtours-plugin'); ?>
+                <input type="text" name="search" value="<?php echo esc_attr($search); ?>" placeholder="<?php esc_html_e('Name, email...', 'wildtours-plugin'); ?>">
+            </label>
+            <button class="button" type="submit"><?php esc_html_e('Go', 'wildtours-plugin'); ?></button>
+        </form>
         <table class="widefat striped"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Country</th><th>Bookings</th><th>Created</th></tr></thead><tbody>
         <?php foreach ($rows as $r): ?><tr>
             <td><?php echo esc_html(trim($r['first_name'].' '.$r['last_name'])); ?></td><td><?php echo esc_html($r['email']); ?></td><td><?php echo esc_html($r['phone']); ?></td><td><?php echo esc_html($r['country']); ?></td><td><?php echo esc_html($r['booking_count']); ?></td><td><?php echo esc_html($r['created_at']); ?></td>

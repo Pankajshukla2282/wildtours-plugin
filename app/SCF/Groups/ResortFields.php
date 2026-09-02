@@ -85,6 +85,23 @@ final class ResortFields extends FieldGroup
                     'type'  => 'email',
                 ],
 
+                [
+                    'key' => 'field_pwt_resort_vendor',
+                    'label' => __('Preferred Vendor', 'wildtours-plugin'),
+                    'name' => 'vendor_id',
+                    'type' => 'post_object',
+                    'post_type' => ['pwt_vendor'],
+                    'return_format' => 'id',
+                ],
+
+                [
+                    'key' => 'field_pwt_resort_bookable',
+                    'label' => __('Available for Package Booking', 'wildtours-plugin'),
+                    'name' => 'bookable',
+                    'type' => 'true_false',
+                    'default_value' => 1,
+                ],
+
             ],
         ]);
     }

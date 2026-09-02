@@ -7,6 +7,9 @@ defined('ABSPATH') || exit;
 
 final class PackageComponentService
 {
+    public function __construct(
+        private readonly ResourceCatalogService $resources
+    ) {}
     public function components(
         int $packageId
     ): array {
@@ -46,6 +49,7 @@ final class PackageComponentService
             if (
                 !$resourceType
                 || !$resourceId
+                || !$this->resources->isValid($resourceType, $resourceId)
             ) {
                 continue;
             }
@@ -66,13 +70,15 @@ final class PackageComponentService
                 )
             );
 
+            $details = $this->resources->details($resourceType, $resourceId);
+
             $clean[] = [
                 'resource_type' => $resourceType,
                 'resource_id' => $resourceId,
                 'name' => sanitize_text_field(
                     (string) (
                         $component['name']
-                        ?? ''
+                        ?? ($details['name'] ?? '')
                     )
                 ),
                 'quantity' => max(

@@ -231,7 +231,7 @@ class Shortcodes
         return ob_get_clean();
     }
 
-    public function contactCard(): string
+public function contactCard(): string
     {
         $settings = get_option('pwt_settings', []);
         $company = $settings['company_name'] ?? get_bloginfo('name');

@@ -16,6 +16,11 @@ final class PackageServiceProvider
             PackageComponentService::class,
             PackageComponentService::class
         );
+
+        $this->singleton(
+            ResourceCatalogService::class,
+            ResourceCatalogService::class
+        );
     }
 
     public function boot(): void

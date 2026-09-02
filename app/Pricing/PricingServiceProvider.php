@@ -11,6 +11,8 @@ final class PricingServiceProvider extends ServiceProvider
         $this->singleton(SeasonResolver::class, SeasonResolver::class);
         $this->singleton(RateManager::class, RateManager::class);
         $this->singleton(PricingService::class, PricingService::class);
+        $this->singleton(MoneyCalculator::class, MoneyCalculator::class);
+        $this->singleton(PackageQuoteService::class, PackageQuoteService::class);
         $this->singleton(RateRepository::class, RateRepository::class);
     }
     public function boot(): void {}

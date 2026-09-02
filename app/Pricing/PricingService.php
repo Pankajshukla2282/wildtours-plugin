@@ -273,7 +273,7 @@ final class PricingService
         );
 
         $quote = [
-            'valid' => true,
+            'valid' => ($matchedRate !== null || $fallback > 0.0),
 
             'resource_id' => $resourceId,
 
