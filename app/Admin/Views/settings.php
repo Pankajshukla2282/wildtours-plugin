@@ -18,7 +18,7 @@
 
 <?php do_settings_sections('pwt-settings'); ?>
 
-submit_button(__('Save Changes', 'wildtours-plugin'));
+<button type="submit" class="button button-primary"><?php esc_html_e('Save Changes', 'wildtours-plugin'); ?></button>
 
 </form>
 
