@@ -1,33 +1,63 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PWT\Taxonomies;
 
-use PWT\Core\ServiceProvider;
+defined('ABSPATH') || exit;
 
-class TaxonomyServiceProvider extends ServiceProvider
+use PWT\Core\ServiceProvider;
+use PWT\Taxonomies\Contracts\TaxonomyInterface;
+
+/**
+ * Registers all plugin taxonomies.
+ */
+final class TaxonomyServiceProvider extends ServiceProvider
 {
+    /**
+     * Registered taxonomy classes.
+     *
+     * @var array<class-string<TaxonomyInterface>>
+     */
+    public const TAXONOMIES = [
+        SafariZone::class,
+        DestinationCategory::class,
+        PackageCategory::class,
+        ResortCategory::class,
+        VehicleType::class,
+        Season::class,
+        Activity::class,
+        Cuisine::class,
+        TripType::class,
+    ];
+
+    /**
+     * Register services.
+     */
+    public function register(): void
+    {
+        // Reserved for future bindings.
+    }
+
+    /**
+     * Boot taxonomies.
+     */
     public function boot(): void
     {
-        $taxonomies = [
+        $taxonomies = apply_filters(
+            'pwt/taxonomies',
+            self::TAXONOMIES
+        );
 
-            new SafariZone(),
+        foreach ($taxonomies as $taxonomyClass) {
 
-            new PackageCategory(),
+            $taxonomy = $this->make($taxonomyClass);
 
-            new VehicleType(),
-
-            new DestinationCategory(),
-
-            new Season(),
-
-            new Activity()
-
-        ];
-
-        foreach ($taxonomies as $taxonomy) {
+            if (!$taxonomy instanceof TaxonomyInterface) {
+                continue;
+            }
 
             $taxonomy->register();
-
         }
     }
 }

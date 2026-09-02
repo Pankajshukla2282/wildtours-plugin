@@ -16,18 +16,26 @@ while (have_posts()) : the_post();
         <article class="pwt-single-safari">
             <header class="pwt-single-hero">
                 <?php if (has_post_thumbnail()) : ?>
-                    <?php the_post_thumbnail('large'); ?>
+                    <?php the_post_thumbnail('medium_large'); ?>
                 <?php endif; ?>
             </header>
 
             <section class="pwt-section">
                 <h1><?php the_title(); ?></h1>
                 <div class="pwt-meta-grid">
-                    <?php if ($duration) : ?><div class="pwt-meta-chip"><strong><?php esc_html_e('Duration', 'panna-wild-tour'); ?>:</strong> <?php echo esc_html($duration); ?></div><?php endif; ?>
-                    <?php if ($shift) : ?><div class="pwt-meta-chip"><strong><?php esc_html_e('Shift', 'panna-wild-tour'); ?>:</strong> <?php echo esc_html(ucfirst(str_replace('_', ' ', $shift))); ?></div><?php endif; ?>
-                    <?php if ($meetingPoint) : ?><div class="pwt-meta-chip"><strong><?php esc_html_e('Meeting Point', 'panna-wild-tour'); ?>:</strong> <?php echo esc_html($meetingPoint); ?></div><?php endif; ?>
-                    <?php if ($offerPrice > 0) : ?><div class="pwt-meta-chip"><strong><?php esc_html_e('Offer Price', 'panna-wild-tour'); ?>:</strong> <?php echo esc_html('INR ' . number_format_i18n($offerPrice, 0)); ?></div><?php endif; ?>
-                    <?php if ($regularPrice > 0) : ?><div class="pwt-meta-chip"><strong><?php esc_html_e('Regular Price', 'panna-wild-tour'); ?>:</strong> <?php echo esc_html('INR ' . number_format_i18n($regularPrice, 0)); ?></div><?php endif; ?>
+                    <?php if ($duration) : ?><div class="pwt-meta-chip"><strong><?php esc_html_e('Duration', 'wildtours-plugin'); ?>:</strong> <?php echo esc_html($duration); ?></div><?php endif; ?>
+                    <?php if ($shift) : ?><div class="pwt-meta-chip"><strong><?php esc_html_e('Shift', 'wildtours-plugin'); ?>:</strong> <?php echo esc_html(ucfirst(str_replace('_', ' ', $shift))); ?></div><?php endif; ?>
+                    <?php if ($meetingPoint) : ?><div class="pwt-meta-chip"><strong><?php esc_html_e('Meeting Point', 'wildtours-plugin'); ?>:</strong> <?php echo esc_html($meetingPoint); ?></div><?php endif; ?>
+                    <?php if ($offerPrice > 0) : ?><div class="pwt-meta-chip"><strong><?php esc_html_e('Offer Price', 'wildtours-plugin'); ?>:</strong> <?php echo esc_html('INR ' . number_format_i18n($offerPrice, 0)); ?></div><?php endif; ?>
+                    <?php if ($regularPrice > 0) : ?><div class="pwt-meta-chip"><strong><?php esc_html_e('Regular Price', 'wildtours-plugin'); ?>:</strong> <?php echo esc_html('INR ' . number_format_i18n($regularPrice, 0)); ?></div><?php endif; ?>
+                </div>
+                <div class="pwt-safari-zones">
+                    <?php $zones = get_the_terms($post->ID, 'pwt_safari_zone'); if ($zones && !is_wp_error($zones)) : ?>
+                        <strong><?php esc_html_e('Safari Zones', 'wildtours-plugin'); ?>:</strong>
+                        <?php foreach ($zones as $zone) : ?>
+                            <span class="pwt-zone-tag"><?php echo esc_html($zone->name); ?></span>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
                 <div>
                     <?php the_content(); ?>

@@ -1,13 +1,19 @@
 <?php
 
-namespace PWT\Admin;
+declare(strict_types=1);
 
-use PWT\Core\ServiceProvider;
+namespace PWT\Admin;
 
 defined('ABSPATH') || exit;
 
-class AdminServiceProvider extends ServiceProvider
+use PWT\Core\ServiceProvider;
+
+final class AdminServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+    }
+
     public function boot(): void
     {
         if (!is_admin()) {
@@ -19,5 +25,7 @@ class AdminServiceProvider extends ServiceProvider
         (new Assets())->register();
 
         (new Settings())->register();
+
+        (new ContentSeeder())->register();
     }
 }

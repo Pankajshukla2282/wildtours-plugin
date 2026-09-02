@@ -9,3 +9,5 @@ margin-bottom:25px;
 margin-top:25px;
 
 }
+
+.pwt-admin-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin:20px 0}.pwt-admin-card{background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:18px}.pwt-admin-card strong{display:block;font-size:28px;line-height:1.2}.pwt-admin-card span{display:block;margin-top:6px;color:#646970}

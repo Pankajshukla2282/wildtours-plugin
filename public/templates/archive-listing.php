@@ -25,19 +25,19 @@ if (is_tax('pwt_destination_category') || ($queriedObject instanceof WP_Term && 
 }
 
 if ($currentPostType === 'pwt_package') {
-    $title = __('Panna Tour Packages', 'panna-wild-tour');
+    $title = __('Panna Tour Packages', 'wildtours-plugin');
     $filters = [
         'package_category' => get_terms(['taxonomy' => 'pwt_package_category', 'hide_empty' => true]),
         'season' => get_terms(['taxonomy' => 'pwt_season', 'hide_empty' => true]),
     ];
 } elseif ($currentPostType === 'pwt_safari') {
-    $title = __('Safari Experiences', 'panna-wild-tour');
+    $title = __('Safari Experiences', 'wildtours-plugin');
     $filters = [
         'safari_zone' => get_terms(['taxonomy' => 'pwt_safari_zone', 'hide_empty' => true]),
         'season' => get_terms(['taxonomy' => 'pwt_season', 'hide_empty' => true]),
     ];
 } else {
-    $title = __('Destinations Around Panna', 'panna-wild-tour');
+    $title = __('Destinations Around Panna', 'wildtours-plugin');
     $filters = [
         'destination_category' => get_terms(['taxonomy' => 'pwt_destination_category', 'hide_empty' => true]),
     ];
@@ -57,10 +57,10 @@ $actionUrl = $queriedObject instanceof WP_Term ? get_term_link($queriedObject) :
             <div class="pwt-form-grid">
                 <?php if ($isSeasonTaxonomy) : ?>
                     <label>
-                        <span><?php esc_html_e('Content Type', 'panna-wild-tour'); ?></span>
+                        <span><?php esc_html_e('Content Type', 'wildtours-plugin'); ?></span>
                         <select name="content_type">
-                            <option value="pwt_package" <?php selected($currentPostType, 'pwt_package'); ?>><?php esc_html_e('Packages', 'panna-wild-tour'); ?></option>
-                            <option value="pwt_safari" <?php selected($currentPostType, 'pwt_safari'); ?>><?php esc_html_e('Safaris', 'panna-wild-tour'); ?></option>
+                            <option value="pwt_package" <?php selected($currentPostType, 'pwt_package'); ?>><?php esc_html_e('Packages', 'wildtours-plugin'); ?></option>
+                            <option value="pwt_safari" <?php selected($currentPostType, 'pwt_safari'); ?>><?php esc_html_e('Safaris', 'wildtours-plugin'); ?></option>
                         </select>
                     </label>
                 <?php endif; ?>
@@ -68,7 +68,7 @@ $actionUrl = $queriedObject instanceof WP_Term ? get_term_link($queriedObject) :
                     <label>
                         <span><?php echo esc_html(ucwords(str_replace('_', ' ', $queryVar))); ?></span>
                         <select name="<?php echo esc_attr($queryVar); ?>">
-                            <option value=""><?php esc_html_e('All', 'panna-wild-tour'); ?></option>
+                            <option value=""><?php esc_html_e('All', 'wildtours-plugin'); ?></option>
                             <?php foreach ($terms as $term) : ?>
                                 <option value="<?php echo esc_attr($term->slug); ?>" <?php selected(sanitize_text_field($_GET[$queryVar] ?? ''), $term->slug); ?>><?php echo esc_html($term->name); ?></option>
                             <?php endforeach; ?>
@@ -76,7 +76,7 @@ $actionUrl = $queriedObject instanceof WP_Term ? get_term_link($queriedObject) :
                     </label>
                 <?php endforeach; ?>
             </div>
-            <p><button type="submit" class="pwt-btn"><?php esc_html_e('Apply Filters', 'panna-wild-tour'); ?></button></p>
+            <p><button type="submit" class="pwt-btn"><?php esc_html_e('Apply Filters', 'wildtours-plugin'); ?></button></p>
         </form>
     </section>
 
@@ -86,17 +86,17 @@ $actionUrl = $queriedObject instanceof WP_Term ? get_term_link($queriedObject) :
                 <?php while (have_posts()) : the_post(); ?>
                     <article class="pwt-card">
                         <?php if (has_post_thumbnail()) : ?>
-                            <div class="pwt-card-image"><?php the_post_thumbnail('large'); ?></div>
+                            <div class="pwt-card-image"><?php the_post_thumbnail('medium_large'); ?></div>
                         <?php endif; ?>
                         <div class="pwt-card-body">
                             <h3><?php the_title(); ?></h3>
                             <p><?php echo esc_html(wp_trim_words(get_the_excerpt() ?: get_the_content(null, false), 24)); ?></p>
-                            <a class="pwt-text-link" href="<?php the_permalink(); ?>"><?php esc_html_e('View details', 'panna-wild-tour'); ?></a>
+                            <a class="pwt-text-link" href="<?php the_permalink(); ?>"><?php esc_html_e('View details', 'wildtours-plugin'); ?></a>
                         </div>
                     </article>
                 <?php endwhile; ?>
             <?php else : ?>
-                <p><?php esc_html_e('No results found for the selected filters.', 'panna-wild-tour'); ?></p>
+                <p><?php esc_html_e('No results found for the selected filters.', 'wildtours-plugin'); ?></p>
             <?php endif; ?>
         </div>
         <?php the_posts_pagination(); ?>

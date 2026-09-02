@@ -4,6 +4,8 @@ namespace PWT\Admin;
 
 defined('ABSPATH') || exit;
 
+use PWT\Core\Paths;
+
 class Assets
 {
     public function register(): void
@@ -22,14 +24,14 @@ class Assets
 
         wp_enqueue_style(
             'pwt-admin',
-            PWT_PLUGIN_URL . 'resources/css/admin.css',
+            Paths::uri('resources/css/admin.css'),
             [],
             PWT_VERSION
         );
 
         wp_enqueue_script(
             'pwt-admin',
-            PWT_PLUGIN_URL . 'resources/js/admin.js',
+            Paths::uri('resources/js/admin.js'),
             ['jquery'],
             PWT_VERSION,
             true

@@ -174,6 +174,41 @@
     margin-bottom: 6px;
 }
 
+.pwt-contact-list a {
+    color: var(--pwt-moss);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.pwt-contact-list a:hover {
+    text-decoration: underline;
+}
+
+.pwt-contact-card {
+    border-top: 4px solid var(--pwt-gold);
+    overflow: hidden;
+}
+
+.pwt-contact-card .pwt-section-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.pwt-contact-card .pwt-section-header h2 {
+    margin: 0;
+    flex: 1;
+    min-width: 200px;
+}
+
+.pwt-contact-card .pwt-section-header p {
+    margin: 0;
+    flex: 1;
+    min-width: 200px;
+}
+
 .pwt-grid-two {
     display: grid;
     grid-template-columns: 1fr;
@@ -205,7 +240,8 @@
 }
 
 .pwt-btn {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     background: linear-gradient(140deg, var(--pwt-gold), #e2be73);
     color: #1f1807;
     border: 0;
@@ -218,6 +254,16 @@
 
 .pwt-btn:hover {
     filter: brightness(0.96);
+}
+
+.pwt-booking-form {
+    margin-top: 18px;
+    border-top: 1px solid rgba(18, 53, 36, 0.12);
+    padding-top: 18px;
+}
+
+.pwt-booking-form .pwt-btn {
+    margin-top: 14px;
 }
 
 .pwt-text-link {
@@ -250,18 +296,27 @@
 }
 
 .pwt-single-hero {
-    border-radius: 18px;
-    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    border-radius: 0;
     background: #f4efe0;
     margin-bottom: 20px;
 }
 
 .pwt-single-hero img {
-    width: 100%;
-    height: 380px;
-    object-fit: cover;
     display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    object-fit: contain;
+    object-position: center;
 }
+
 
 .pwt-meta-grid {
     display: grid;
@@ -307,6 +362,19 @@
     margin: 0 auto 24px;
 }
 
+.pwt-payment-portal .pwt-section-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.pwt-portal-toolbar {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
 .pwt-form-message.is-success {
     color: #1f6f31;
 }
@@ -332,4 +400,160 @@
         grid-template-columns: 1.6fr 1fr;
         align-items: start;
     }
+}
+
+
+/* PWT component-owned media: dynamic at every resolution. */
+.pwt-single-wrap,
+.pwt-single-hero,
+.pwt-featured-image,
+.pwt-single-wrap figure {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: auto;
+    box-sizing: border-box;
+}
+
+.pwt-single-hero,
+.pwt-featured-image,
+.pwt-single-wrap figure {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+}
+
+.pwt-single-hero img,
+.pwt-featured-image img,
+.pwt-single-wrap figure img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: auto;
+    max-height: none;
+    margin-inline: auto;
+    object-fit: contain;
+    object-position: center;
+    transform: none;
+    clip-path: none;
+    mask: none;
+    box-sizing: border-box;
+}
+
+/* Inline/editor dimensions must not crop PWT content images. */
+.pwt-single-wrap figure[style],
+.pwt-single-wrap figure img[style] {
+    max-width: 100% !important;
+}
+
+@media (max-width: 960px) {
+    .pwt-single-wrap,
+    .pwt-single-hero,
+    .pwt-featured-image,
+    .pwt-single-wrap figure {
+        margin-inline: 0;
+        padding-inline: 0;
+    }
+}
+
+/* Availability calendar — clickable dates for available days. */
+.pwt-calendar {
+    margin-top: 28px;
+}
+
+.pwt-calendar-month {
+    margin-bottom: 24px;
+}
+
+.pwt-calendar-title {
+    margin: 0 0 12px;
+    font-size: 1.05rem;
+}
+
+.pwt-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    max-width: 560px;
+}
+
+.pwt-calendar-dow {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+}
+
+.pwt-calendar-blank {
+    min-height: 40px;
+}
+
+.pwt-calendar-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.pwt-calendar-day.is-available {
+    background: #eef7f0;
+    color: #1f6f31;
+    border: 1px solid #cfe8d6;
+    cursor: pointer;
+}
+
+.pwt-calendar-day.is-available:hover,
+.pwt-calendar-day.is-available:focus {
+    background: #1f6f31;
+    color: #fff;
+}
+
+.pwt-calendar-day.is-available.is-selected {
+    background: #1f6f31;
+    color: #fff;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #1f6f31;
+}
+
+.pwt-calendar-day.is-today:not(.is-selected) {
+    box-shadow: inset 0 0 0 2px #1f6f31;
+}
+
+.pwt-calendar-day.is-past {
+    color: #c1c7cd;
+    background: #f3f4f6;
+}
+
+.pwt-calendar-day.is-blocked,
+.pwt-calendar-day.is-unavailable {
+    color: #b6bcc3;
+    background: #f6f6f7;
+    border: 1px dashed #e0e3e6;
+}
+
+.pwt-calendar-legend {
+    font-size: 0.8rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pwt-calendar-legend .pwt-calendar-day {
+    min-height: 24px;
+    width: 24px;
+    font-size: 0.72rem;
+}
+
+.pwt-calendar-hint {
+    margin-top: 16px;
+    color: #6b7280;
 }

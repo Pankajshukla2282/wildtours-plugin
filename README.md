@@ -1,39 +1,81 @@
-# Panna Wild Tour
+# Panna Wild Tour Core 2.0
 
-WordPress plugin to run a complete wild tour travel-agency website.
+Core WordPress plugin for the Panna Wild Tour travel, safari, accommodation, restaurant and local-trip business.
 
-## Features
+## Responsibilities
 
-- Archive and taxonomy discovery pages with frontend filters.
-- Payment intent portal with advance-payment reference submission and admin status tracking.
+- Business/content post types and taxonomies
+- SCF field groups
+- Customers
+- Bookings and booking items
+- Availability/capacity
+- Pricing/rates
+- Inventory checks
+- Payments
+- REST API
+- Integrations
 
-## Quick Setup
+Themes remain presentation-only.
 
-- `[pwt_payment_page]` Customer payment portal page.
+## Compatibility
 
-- `[pwt_homepage]` Full homepage sections.
-- `[pwt_packages]` Package listing section.
-- `[pwt_safaris]` Safari listing section.
-- `[pwt_destinations]` Destination listing section.
-- `[pwt_testimonials]` Testimonial cards.
-- `[pwt_faq]` FAQ accordion.
-- `[pwt_contact_card]` Contact details block.
-- `[pwt_booking_form]` AJAX booking form.
-7. Create a payment page with shortcode `[pwt_payment_page]` and save its URL in plugin settings.
+Existing `pwt_booking` posts are retained. The new normalized booking tables are additive and linked to legacy booking records.
 
-## Booking Workflow
+See `docs/ARCHITECTURE.md` for the target architecture and migration roadmap.
 
-## Seasonal Estimate Logic
 
-- Peak season: Nov-Feb (default multiplier 1.2)
-- Shoulder season: Mar-Jun (default multiplier 1.0)
-- Monsoon season: Jul-Oct (default multiplier 0.85)
-1. Customer submits booking inquiry.
-2. Plugin creates a payment intent for the configured advance percentage.
-3. Customer opens the secure payment page link.
-4. Customer pays via UPI/bank method and submits UTR/reference.
-5. Admin verifies payment and updates booking payment status.
-- Estimate formula: `package_base_price * persons * season_multiplier`
+## Version 2.1.0 modules
 
-Per-package multipliers can be overridden in Package fields.
+- Accommodation room types and room units
+- Safari schedules and vehicle assignments
+- Seasonal/date/quantity pricing
+- Customer portal shortcode: `[pwt_customer_portal]`
+- Operations dashboard with availability, pricing and customer views
 
+
+## Version 2.2.0 — Phases 4, 5, 6 and Reporting
+
+### Phase 4 — Booking orchestration
+- Multi-service booking items
+- Availability validation before booking
+- Pricing quote integration
+- Booking totals
+- Confirmation and cancellation orchestration
+
+### Phase 5 — Inventory holds
+- Temporary inventory holds
+- Hold expiry
+- Booking-level hold release
+- Scheduled cleanup
+
+### Phase 6 — Payments
+- Payment repository
+- Idempotency keys
+- Successful payment recording
+- Booking confirmation after payment
+- Signed webhook verification hook
+- Provider-neutral payment processing foundation
+
+### Reporting
+- Date-range operations report
+- Booking status report
+- Gross booking value
+- Payments received
+- Refund totals
+- Customer counts
+- Top services
+- Admin report screen
+- CSV-ready report generation
+
+
+## Version 2.2.2 — PHP type compatibility and translation loading fix
+
+- Fixed `?string` inheritance compatibility for all taxonomy and post type `rewriteSlug` properties.
+- Deferred `wildtours-plugin` translation loading to the WordPress `init` hook.
+
+
+## Version 2.2.3 — WordPress 6.7 translation lifecycle fix
+
+- Removed the plugin's `load_plugin_textdomain()` call from `plugins_loaded`.
+- Translation loading now occurs only from the main plugin bootstrap on `init`.
+- Retained compatible nullable `rewriteSlug` declarations across post types and taxonomies.

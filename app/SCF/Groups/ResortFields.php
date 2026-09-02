@@ -1,72 +1,90 @@
 <?php
 
-namespace PWT\SCF\Groups;
+declare(strict_types=1);
 
-use PWT\SCF\FieldGroup;
+namespace PWT\SCF\Groups;
 
 defined('ABSPATH') || exit;
 
-class ResortFields extends FieldGroup
+use PWT\SCF\FieldGroup;
+
+/**
+ * Resort field group.
+ */
+final class ResortFields extends FieldGroup
 {
+    /**
+     * Register resort field group.
+     */
     public function register(): void
     {
         $this->addGroup([
-            'key' => 'group_pwt_resort_details',
-            'title' => 'Resort Details',
+            'key'   => 'group_pwt_resort_details',
+
+            'title' => __('Resort Details', 'wildtours-plugin'),
+
             'location' => [[[
-                'param' => 'post_type',
+                'param'    => 'post_type',
                 'operator' => '=',
-                'value' => 'pwt_resort',
+                'value'    => 'pwt_resort',
             ]]],
+
             'fields' => [
+
                 [
-                    'key' => 'field_pwt_resort_type',
-                    'label' => 'Resort Type',
-                    'name' => 'resort_type',
-                    'type' => 'select',
+                    'key'     => 'field_pwt_resort_type',
+                    'label'   => __('Resort Type', 'wildtours-plugin'),
+                    'name'    => 'resort_type',
+                    'type'    => 'select',
                     'choices' => [
-                        'budget' => 'Budget',
-                        'premium' => 'Premium',
-                        'luxury' => 'Luxury',
+                        'budget'  => __('Budget', 'wildtours-plugin'),
+                        'premium' => __('Premium', 'wildtours-plugin'),
+                        'luxury'  => __('Luxury', 'wildtours-plugin'),
                     ],
                 ],
+
                 [
-                    'key' => 'field_pwt_resort_price',
-                    'label' => 'Price per Night (INR)',
-                    'name' => 'price_per_night',
-                    'type' => 'number',
+                    'key'   => 'field_pwt_resort_price',
+                    'label' => __('Price per Night (INR)', 'wildtours-plugin'),
+                    'name'  => 'price_per_night',
+                    'type'  => 'number',
                 ],
+
                 [
-                    'key' => 'field_pwt_resort_distance_gate',
-                    'label' => 'Distance from Safari Gate (KM)',
-                    'name' => 'distance_from_gate',
-                    'type' => 'number',
+                    'key'   => 'field_pwt_resort_distance_gate',
+                    'label' => __('Distance from Safari Gate (KM)', 'wildtours-plugin'),
+                    'name'  => 'distance_from_gate',
+                    'type'  => 'number',
                 ],
+
                 [
-                    'key' => 'field_pwt_resort_amenities',
-                    'label' => 'Amenities',
-                    'name' => 'amenities',
-                    'type' => 'checkbox',
+                    'key'     => 'field_pwt_resort_amenities',
+                    'label'   => __('Amenities', 'wildtours-plugin'),
+                    'name'    => 'amenities',
+                    'type'    => 'checkbox',
                     'choices' => [
-                        'pool' => 'Swimming Pool',
-                        'wifi' => 'WiFi',
-                        'parking' => 'Parking',
-                        'restaurant' => 'Restaurant',
-                        'pickup' => 'Pickup & Drop',
+                        'pool'       => __('Swimming Pool', 'wildtours-plugin'),
+                        'wifi'       => __('WiFi', 'wildtours-plugin'),
+                        'parking'    => __('Parking', 'wildtours-plugin'),
+                        'restaurant' => __('Restaurant', 'wildtours-plugin'),
+                        'pickup'     => __('Pickup & Drop', 'wildtours-plugin'),
                     ],
                 ],
+
                 [
-                    'key' => 'field_pwt_resort_contact_phone',
-                    'label' => 'Contact Phone',
-                    'name' => 'contact_phone',
-                    'type' => 'text',
+                    'key'   => 'field_pwt_resort_contact_phone',
+                    'label' => __('Contact Phone', 'wildtours-plugin'),
+                    'name'  => 'contact_phone',
+                    'type'  => 'text',
                 ],
+
                 [
-                    'key' => 'field_pwt_resort_contact_email',
-                    'label' => 'Contact Email',
-                    'name' => 'contact_email',
-                    'type' => 'email',
+                    'key'   => 'field_pwt_resort_contact_email',
+                    'label' => __('Contact Email', 'wildtours-plugin'),
+                    'name'  => 'contact_email',
+                    'type'  => 'email',
                 ],
+
             ],
         ]);
     }

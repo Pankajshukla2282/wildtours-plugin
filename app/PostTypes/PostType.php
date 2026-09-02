@@ -1,103 +1,248 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PWT\PostTypes;
 
 defined('ABSPATH') || exit;
 
-abstract class PostType
-{
-    protected string $postType;
-    protected string $singular;
-    protected string $plural;
+use PWT\PostTypes\Contracts\PostTypeInterface;
 
+/**
+ * Base class for all plugin custom post types.
+ */
+abstract class PostType implements PostTypeInterface
+{
+    /**
+     * Post type slug.
+     */
+    protected string $postType = '';
+
+    /**
+     * Singular label.
+     */
+    protected string $singular = '';
+
+    /**
+     * Plural label.
+     */
+    protected string $plural = '';
+
+    /**
+     * Supported editor features.
+     *
+     * @var string[]
+     */
     protected array $supports = [
         'title',
         'editor',
         'thumbnail',
-        'excerpt'
+        'excerpt',
     ];
 
+    /**
+     * Taxonomies attached to this post type.
+     *
+     * @var string[]
+     */
+    protected array $taxonomies = [];
+
+    /**
+     * Menu icon.
+     */
+    protected string $menuIcon = 'dashicons-admin-post';
+
+    /**
+     * Menu position.
+     */
+    protected int $menuPosition = 20;
+
+    /**
+     * Whether the post type is public.
+     */
+    protected bool $public = true;
+
+    /**
+     * Whether REST API is enabled.
+     */
+    protected bool $showInRest = true;
+
+    /**
+     * Whether archives are enabled.
+     */
+    protected bool $hasArchive = true;
+
+    /**
+     * Rewrite slug.
+     */
+    protected ?string $rewriteSlug = null;
+
+    /**
+     * Capability type.
+     */
+    protected string $capabilityType = 'post';
+
+    /**
+     * Register the post type.
+     */
     public function register(): void
     {
-        add_action('init', [$this, 'create']);
-    }
+        if (did_action('init')) {
+            $this->create();
 
-    public function create(): void
-    {
-        register_post_type(
-            $this->postType,
-            $this->args()
+            return;
+        }
+
+        add_action(
+            'init',
+            [$this, 'create'],
+            0
         );
     }
 
+    /**
+     * Create the post type.
+     */
+    final public function create(): void
+    {
+        $this->validate();
+
+        if (post_type_exists($this->postType)) {
+            return;
+        }
+
+        register_post_type(
+            $this->postType,
+            apply_filters(
+                "pwt/post_type_args/{$this->postType}",
+                $this->args()
+            )
+        );
+    }
+
+    /**
+     * Validate required configuration.
+     */
+    protected function validate(): void
+    {
+        if (
+            $this->postType === ''
+            || $this->singular === ''
+            || $this->plural === ''
+        ) {
+            _doing_it_wrong(
+                static::class,
+                __('Post type configuration is incomplete.', 'wildtours-plugin'),
+                PWT_VERSION
+            );
+        }
+    }
+
+    /**
+     * Build post type arguments.
+     */
     protected function args(): array
     {
         return [
             'labels' => $this->labels(),
 
-            'public' => true,
+            'public' => $this->public,
 
-            'show_in_rest' => true,
+            'show_ui' => true,
 
-            'menu_position' => 20,
+            /*
+             * All plugin custom post types appear below
+             * the central Panna Wild Tour admin menu.
+             */
+            'show_in_menu' => PWT_ADMIN_MENU_SLUG,
 
-            'menu_icon' => $this->menuIcon(),
+            'show_in_rest' => $this->showInRest,
 
-            'supports' => $this->supports,
+            'menu_position' => $this->menuPosition,
 
-            'has_archive' => true,
+            'menu_icon' => $this->menuIcon,
 
-            'rewrite' => [
-                'slug' => $this->postType
-            ]
+            'supports' => apply_filters(
+                "pwt/post_type_supports/{$this->postType}",
+                $this->supports
+            ),
+
+            'taxonomies' => $this->taxonomies,
+
+            'has_archive' => $this->public
+                ? $this->hasArchive
+                : false,
+
+            'capability_type' => $this->capabilityType,
+
+            'map_meta_cap' => true,
+
+            'rewrite' => $this->public
+                ? [
+                    'slug' => $this->rewriteSlug ?? $this->postType,
+                ]
+                : false,
         ];
     }
 
+    /**
+     * Build labels.
+     */
     protected function labels(): array
     {
-        return [
+        return apply_filters(
+            "pwt/post_type_labels/{$this->postType}",
+            [
+                'name' => $this->plural,
 
-            'name' => $this->plural,
+                'singular_name' => $this->singular,
 
-            'singular_name' => $this->singular,
+                'menu_name' => $this->plural,
 
-            'add_new' => __('Add New','panna-wild-tour'),
+                'name_admin_bar' => $this->singular,
 
-            'add_new_item' =>
-                sprintf(
-                    __('Add New %s','panna-wild-tour'),
+                'add_new' => __('Add New', 'wildtours-plugin'),
+
+                'add_new_item' => sprintf(
+                    __('Add New %s', 'wildtours-plugin'),
                     $this->singular
                 ),
 
-            'edit_item' =>
-                sprintf(
-                    __('Edit %s','panna-wild-tour'),
+                'edit_item' => sprintf(
+                    __('Edit %s', 'wildtours-plugin'),
                     $this->singular
                 ),
 
-            'new_item' =>
-                sprintf(
-                    __('New %s','panna-wild-tour'),
+                'new_item' => sprintf(
+                    __('New %s', 'wildtours-plugin'),
                     $this->singular
                 ),
 
-            'view_item' =>
-                sprintf(
-                    __('View %s','panna-wild-tour'),
+                'view_item' => sprintf(
+                    __('View %s', 'wildtours-plugin'),
                     $this->singular
                 ),
 
-            'search_items' =>
-                sprintf(
-                    __('Search %s','panna-wild-tour'),
+                'search_items' => sprintf(
+                    __('Search %s', 'wildtours-plugin'),
                     $this->plural
-                )
+                ),
 
-        ];
-    }
+                'not_found' => sprintf(
+                    __('No %s found.', 'wildtours-plugin'),
+                    strtolower($this->plural)
+                ),
 
-    protected function menuIcon(): string
-    {
-        return 'dashicons-admin-post';
+                'not_found_in_trash' => sprintf(
+                    __('No %s found in Trash.', 'wildtours-plugin'),
+                    strtolower($this->plural)
+                ),
+
+                'all_items' => sprintf(
+                    __('All %s', 'wildtours-plugin'),
+                    $this->plural
+                ),
+            ]
+        );
     }
 }

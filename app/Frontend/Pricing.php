@@ -13,7 +13,7 @@ class Pricing
         if (!$timestamp) {
             return [
                 'slug' => 'shoulder',
-                'label' => __('Shoulder Season', 'panna-wild-tour'),
+                'label' => __('Shoulder Season', 'wildtours-plugin'),
                 'multiplier' => 1.0,
             ];
         }
@@ -23,7 +23,7 @@ class Pricing
         if (in_array($month, [11, 12, 1, 2], true)) {
             return [
                 'slug' => 'peak',
-                'label' => __('Peak Season', 'panna-wild-tour'),
+                'label' => __('Peak Season', 'wildtours-plugin'),
                 'multiplier' => 1.2,
             ];
         }
@@ -31,14 +31,14 @@ class Pricing
         if (in_array($month, [7, 8, 9, 10], true)) {
             return [
                 'slug' => 'monsoon',
-                'label' => __('Monsoon Season', 'panna-wild-tour'),
+                'label' => __('Monsoon Season', 'wildtours-plugin'),
                 'multiplier' => 0.85,
             ];
         }
 
         return [
             'slug' => 'shoulder',
-            'label' => __('Shoulder Season', 'panna-wild-tour'),
+            'label' => __('Shoulder Season', 'wildtours-plugin'),
             'multiplier' => 1.0,
         ];
     }
@@ -90,7 +90,7 @@ class Pricing
                 'season_multiplier' => $season['multiplier'],
                 'persons' => $persons,
                 'estimated_total' => 0,
-                'formatted_total' => __('Price on request', 'panna-wild-tour'),
+                'formatted_total' => __('Price on request', 'wildtours-plugin'),
             ];
         }
 
@@ -103,7 +103,7 @@ class Pricing
             'season_multiplier' => round($multiplier, 2),
             'persons' => $persons,
             'estimated_total' => round($estimatedTotal, 2),
-            'formatted_total' => sprintf(__('INR %s', 'panna-wild-tour'), number_format_i18n((float) $estimatedTotal, 0)),
+            'formatted_total' => sprintf(__('INR %s', 'wildtours-plugin'), number_format_i18n((float) $estimatedTotal, 0)),
         ];
     }
 }

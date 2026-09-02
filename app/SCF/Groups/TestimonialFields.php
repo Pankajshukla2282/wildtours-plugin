@@ -1,23 +1,33 @@
 <?php
 
-namespace PWT\SCF\Groups;
+declare(strict_types=1);
 
-use PWT\SCF\FieldGroup;
+namespace PWT\SCF\Groups;
 
 defined('ABSPATH') || exit;
 
-class TestimonialFields extends FieldGroup
+use PWT\SCF\FieldGroup;
+
+/**
+ * Testimonial field group.
+ */
+final class TestimonialFields extends FieldGroup
 {
+    /**
+     * Register testimonial fields.
+     */
     public function register(): void
     {
         $this->addGroup([
             'key' => 'group_pwt_testimonial_details',
-            'title' => 'Testimonial Details',
+            'title' => __('Testimonial Details', 'wildtours-plugin'),
+
             'location' => [[[
                 'param' => 'post_type',
                 'operator' => '=',
                 'value' => 'pwt_testimonial',
             ]]],
+
             'fields' => [
                 [
                     'key' => 'field_pwt_testimonial_guest_name',

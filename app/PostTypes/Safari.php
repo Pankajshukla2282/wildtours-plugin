@@ -1,10 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PWT\PostTypes;
 
 defined('ABSPATH') || exit;
 
-class Safari extends PostType
+/**
+ * Safari custom post type.
+ */
+final class Safari extends PostType
 {
     protected string $postType = 'pwt_safari';
 
@@ -12,8 +17,5 @@ class Safari extends PostType
 
     protected string $plural = 'Safaris';
 
-    protected function menuIcon(): string
-    {
-        return 'dashicons-camera';
-    }
+    protected string $menuIcon = 'dashicons-camera';
 }

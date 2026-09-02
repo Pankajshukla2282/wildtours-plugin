@@ -1,56 +1,73 @@
 <?php
+
+declare(strict_types=1);
+
 namespace PWT\Core;
 
 defined('ABSPATH') || exit;
 
-class Activator
+use PWT\Core\Database\Schema;
+use PWT\PostTypes\PostTypeServiceProvider;
+use PWT\Taxonomies\TaxonomyServiceProvider;
+
+/**
+ * Plugin activation handler.
+ */
+final class Activator
 {
+    /**
+     * Activate plugin.
+     */
     public static function activate(): void
     {
-        self::seedTaxonomies();
+        Schema::install();
+        self::registerPostTypes();
+        self::registerTaxonomies();
+        self::registerRoles();
 
         flush_rewrite_rules();
+
+        update_option('pwt_plugin_version', PWT_VERSION);
     }
 
-    private static function seedTaxonomies(): void
+    private static function registerRoles(): void
     {
-        $zones = [
-            'Madla',
-            'Hinauta',
-            'Akola',
-            'Panna Buffer'
-        ];
-
-        foreach ($zones as $zone) {
-
-            if (!term_exists($zone, 'pwt_safari_zone')) {
-
-                wp_insert_term(
-                    $zone,
-                    'pwt_safari_zone'
-                );
-
-            }
-
+        $admin = get_role('administrator');
+        if ($admin && !$admin->has_cap('pwt_manage_operations')) {
+            $admin->add_cap('pwt_manage_operations');
         }
 
-        $seasons = [
-            'Summer',
-            'Monsoon',
-            'Winter'
-        ];
+        if (!get_role('pwt_staff')) {
+            add_role('pwt_staff', __('PWT Staff', 'wildtours-plugin'), [
+                'read' => true,
+                'pwt_manage_operations' => true,
+            ]);
+        }
+    }
 
-        foreach ($seasons as $season) {
+    /**
+     * Register post types synchronously so rewrite rules exist before flushing.
+     */
+    private static function registerPostTypes(): void
+    {
+        $postTypes = apply_filters('pwt/post_types', PostTypeServiceProvider::POST_TYPES);
 
-            if (!term_exists($season, 'pwt_season')) {
+        foreach ($postTypes as $postTypeClass) {
+            $instance = new $postTypeClass();
+            $instance->create();
+        }
+    }
 
-                wp_insert_term(
-                    $season,
-                    'pwt_season'
-                );
+    /**
+     * Register taxonomies synchronously so rewrite rules exist before flushing.
+     */
+    private static function registerTaxonomies(): void
+    {
+        $taxonomies = apply_filters('pwt/taxonomies', TaxonomyServiceProvider::TAXONOMIES);
 
-            }
-
+        foreach ($taxonomies as $taxonomyClass) {
+            $instance = new $taxonomyClass();
+            $instance->create();
         }
     }
 }

@@ -1,23 +1,33 @@
 <?php
 
-namespace PWT\SCF\Groups;
+declare(strict_types=1);
 
-use PWT\SCF\FieldGroup;
+namespace PWT\SCF\Groups;
 
 defined('ABSPATH') || exit;
 
-class FAQFields extends FieldGroup
+use PWT\SCF\FieldGroup;
+
+/**
+ * FAQ field group.
+ */
+final class FAQFields extends FieldGroup
 {
+    /**
+     * Register FAQ fields.
+     */
     public function register(): void
     {
         $this->addGroup([
             'key' => 'group_pwt_faq_details',
-            'title' => 'FAQ Details',
+            'title' => __('FAQ Details', 'wildtours-plugin'),
+
             'location' => [[[
                 'param' => 'post_type',
                 'operator' => '=',
                 'value' => 'pwt_faq',
             ]]],
+
             'fields' => [
                 [
                     'key' => 'field_pwt_faq_category',

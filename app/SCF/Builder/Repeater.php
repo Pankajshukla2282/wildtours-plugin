@@ -83,14 +83,14 @@ class Repeater extends Field
     }
 
     /** Set minimum number of rows. */
-    public function min(int $min): static
+    public function min(int|float $min): static
     {
         $this->minRows = $min;
         return $this;
     }
 
     /** Set maximum number of rows. */
-    public function max(int $max): static
+    public function max(int|float $max): static
     {
         $this->maxRows = $max;
         return $this;

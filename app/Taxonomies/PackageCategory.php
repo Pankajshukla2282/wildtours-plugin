@@ -1,8 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PWT\Taxonomies;
 
-class PackageCategory extends Taxonomy
+defined('ABSPATH') || exit;
+
+/**
+ * Package Category taxonomy.
+ */
+final class PackageCategory extends Taxonomy
 {
     protected string $taxonomy = 'pwt_package_category';
 
@@ -11,6 +18,6 @@ class PackageCategory extends Taxonomy
     protected string $plural = 'Package Categories';
 
     protected array $postTypes = [
-        'pwt_package'
+        'pwt_package',
     ];
 }

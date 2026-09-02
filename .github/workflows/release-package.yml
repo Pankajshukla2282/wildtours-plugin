@@ -1,0 +1,135 @@
+name: Build Plugin Package
+
+on:
+  push:
+    branches: [main, development]
+    tags: ['v*']
+  pull_request:
+    branches: [main, development]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Package wildtours-plugin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for auto-version commit
+        id: skip-check
+        run: |
+          MSG="$(git log -1 --format=%B)"
+          if echo "$MSG" | grep -qE '\[skip ci\]|\[ci skip\]'; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Skipping (auto-version commit)"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump patch version
+        if: steps.skip-check.outputs.skip != 'true' && startsWith(github.ref, 'refs/heads/')
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="wildtours-plugin.php"
+          CUR="$(grep -iE '^[[:space:]]*(\*[[:space:]]*)?Version:[[:space:]]*[0-9]+(\.[0-9]+){0,2}' "${FILE}" | head -n1 | sed -E 's/.*Version:[[:space:]]*([0-9]+(\.[0-9]+){0,2}).*/\1/')"
+          CUR="${CUR:-1.0.0}"
+          NEW="$(echo "${CUR}" | awk -F. '{printf "%d.%d.%d", $1, ($2==""?0:$2), ($3==""?0:$3)+1}')"
+          sed -i -E "/[Vv]ersion:/ s/Version:[[:space:]]*${CUR}/Version: ${NEW}/" "${FILE}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${FILE}"
+          git commit -m "chore(release): bump version to ${NEW} [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "Bumped ${CUR} -> ${NEW}"
+
+      - name: Check PHP
+        if: steps.skip-check.outputs.skip != 'true'
+        run: |
+          php -v
+
+      - name: Lint PHP files
+        if: steps.skip-check.outputs.skip != 'true'
+        run: |
+          if find . -name '*.php' -print0 | xargs -0 -r php -l | grep -v 'No syntax errors'; then
+            echo "::error::PHP syntax errors detected"
+            exit 1
+          fi
+
+      - name: Validate plugin structure
+        if: steps.skip-check.outputs.skip != 'true'
+        run: |
+          test -f wildtours-plugin.php
+          grep -qiE 'Plugin Name:' wildtours-plugin.php
+
+      - name: Build installable zip
+        if: steps.skip-check.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          SLUG="wildtours-plugin"
+          VERSION="$(grep -iE 'Version:' wildtours-plugin.php | head -n1 | sed -E 's/.*Version:[[:space:]]*([0-9][^[:space:];]*).*/\1/')"
+          VERSION="${VERSION:-dev}"
+          PKG_ROOT="${RUNNER_TEMP}/pkg"
+          mkdir -p "${PKG_ROOT}/${SLUG}"
+          rsync -a \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.gitignore' \
+            --exclude='README.md' \
+            --exclude='*.zip' \
+            --exclude='*.bak' \
+            --exclude='*.log' \
+            --exclude='node_modules/' \
+            --exclude='tests/' \
+            --exclude='build/' \
+            --exclude='vendor/' \
+            ./ "${PKG_ROOT}/${SLUG}/"
+          ZIP_PATH="${RUNNER_TEMP}/${SLUG}-${VERSION}.zip"
+          ( cd "${PKG_ROOT}" && zip -qr "${ZIP_PATH}" "${SLUG}" )
+          echo "ZIP_PATH=${ZIP_PATH}" >> "$GITHUB_ENV"
+          echo "PACKAGE_VERSION=${VERSION}" >> "$GITHUB_ENV"
+
+      - name: Verify zip structure
+        if: steps.skip-check.outputs.skip != 'true'
+        run: |
+          unzip -l "${ZIP_PATH}" | grep -q "${SLUG}/wildtours-plugin.php"
+          unzip -l "${ZIP_PATH}" | grep -q "${SLUG}/uninstall.php"
+
+      - name: Upload artifact
+        if: steps.skip-check.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wildtours-plugin-${{ env.PACKAGE_VERSION }}
+          path: ${{ runner.temp }}/pkg
+          if-no-files-found: error
+
+      - name: Download artifact as delivered
+        if: steps.skip-check.outputs.skip != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: wildtours-plugin-${{ env.PACKAGE_VERSION }}
+          path: ${{ runner.temp }}/verify
+
+      - name: Verify downloaded artifact is installable
+        if: steps.skip-check.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          SLUG="wildtours-plugin"
+          VERIFY="${{ runner.temp }}/verify"
+          test -d "${VERIFY}/${SLUG}"
+          test -f "${VERIFY}/${SLUG}/wildtours-plugin.php"
+          test -f "${VERIFY}/${SLUG}/uninstall.php"
+
+      - name: Create Release
+        if: steps.skip-check.outputs.skip != 'true' && startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" "${ZIP_PATH}" \
+            --title "wildtours-plugin ${GITHUB_REF_NAME}" \
+            --generate-notes || true

@@ -1,8 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PWT\Taxonomies;
 
-class Season extends Taxonomy
+defined('ABSPATH') || exit;
+
+/**
+ * Season taxonomy.
+ */
+final class Season extends Taxonomy
 {
     protected string $taxonomy = 'pwt_season';
 
@@ -12,6 +19,6 @@ class Season extends Taxonomy
 
     protected array $postTypes = [
         'pwt_package',
-        'pwt_safari'
+        'pwt_safari',
     ];
 }

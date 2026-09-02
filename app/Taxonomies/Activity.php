@@ -1,8 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PWT\Taxonomies;
 
-class Activity extends Taxonomy
+defined('ABSPATH') || exit;
+
+/**
+ * Activity taxonomy.
+ */
+final class Activity extends Taxonomy
 {
     protected string $taxonomy = 'pwt_activity';
 
@@ -12,6 +19,6 @@ class Activity extends Taxonomy
 
     protected array $postTypes = [
         'pwt_package',
-        'pwt_destination'
+        'pwt_safari',
     ];
 }

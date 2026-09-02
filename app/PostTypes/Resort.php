@@ -12,8 +12,13 @@ class Resort extends PostType
 
     protected string $plural='Resorts';
 
-    protected function menuIcon(): string
+    protected string $menuIcon = 'dashicons-building';
+
+    protected function args(): array
     {
-        return 'dashicons-building';
+        $args = parent::args();
+        $args['show_in_menu'] = false;
+
+        return $args;
     }
 }

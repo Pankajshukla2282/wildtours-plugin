@@ -1,8 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PWT\Taxonomies;
 
-class DestinationCategory extends Taxonomy
+defined('ABSPATH') || exit;
+
+/**
+ * Destination Category taxonomy.
+ */
+final class DestinationCategory extends Taxonomy
 {
     protected string $taxonomy = 'pwt_destination_category';
 
@@ -11,6 +18,6 @@ class DestinationCategory extends Taxonomy
     protected string $plural = 'Destination Categories';
 
     protected array $postTypes = [
-        'pwt_destination'
+        'pwt_destination',
     ];
 }

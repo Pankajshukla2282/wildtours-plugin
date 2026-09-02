@@ -1,40 +1,109 @@
 <?php
 
-namespace PWT\SCF;
+declare(strict_types=1);
 
-use PWT\Core\ServiceProvider;
+namespace PWT\SCF;
 
 defined('ABSPATH') || exit;
 
-class SCFServiceProvider extends ServiceProvider
+use PWT\Core\ServiceProvider;
+use PWT\SCF\Contracts\FieldGroupInterface;
+use PWT\SCF\Groups\DestinationFields;
+use PWT\SCF\Groups\FAQFields;
+use PWT\SCF\Groups\PackageFields;
+use PWT\SCF\Groups\ResortFields;
+use PWT\SCF\Groups\ReviewFields;
+use PWT\SCF\Groups\SafariFields;
+use PWT\SCF\Groups\TestimonialFields;
+use PWT\SCF\Groups\VehicleFields;
+use PWT\SCF\Groups\RestaurantFields;
+use PWT\SCF\Groups\LocalTripFields;
+use PWT\SCF\Groups\RoomTypeFields;
+use PWT\SCF\Groups\RoomUnitFields;
+use PWT\SCF\Groups\SafariScheduleFields;
+use PWT\SCF\Groups\NavigationFields;
+use PWT\SCF\Groups\SeasonFields;
+
+/**
+ * Registers all SCF/ACF field groups.
+ */
+final class SCFServiceProvider extends ServiceProvider
 {
-    public function boot(): void
+    /**
+     * Registered field groups.
+     *
+     * @var array<class-string<FieldGroupInterface>>
+     */
+    private const FIELD_GROUPS = [
+        SafariFields::class,
+        PackageFields::class,
+        ResortFields::class,
+        VehicleFields::class,
+        RestaurantFields::class,
+        LocalTripFields::class,
+        RoomTypeFields::class,
+        RoomUnitFields::class,
+        SafariScheduleFields::class,
+        DestinationFields::class,
+        TestimonialFields::class,
+        ReviewFields::class,
+        FAQFields::class,
+        NavigationFields::class,
+        SeasonFields::class,
+    ];
+
+    /**
+     * Register services.
+     */
+    public function register(): void
     {
-        add_action(
-            'init',
-            [$this,'registerGroups'],
-            20
-        );
+        // Reserved for future bindings.
     }
 
+    /**
+     * Boot provider.
+     */
+    public function boot(): void
+    {
+        add_action('init', [$this, 'registerGroups'], 20);
+    }
+
+    /**
+     * Register all field groups.
+     */
     public function registerGroups(): void
     {
-        if (!function_exists('scf_register_field_group') && !function_exists('acf_add_local_field_group')) {
+        if (
+            !function_exists('scf_register_field_group')
+            && !function_exists('acf_add_local_field_group')
+        ) {
+            add_action('admin_notices', function (): void {
+                if (!current_user_can('activate_plugins')) {
+                    return;
+                }
+
+                echo '<div class="notice notice-warning"><p>'
+                    . esc_html__('Panna Wild Tour content fields are inactive. Install and activate the Secure Custom Fields (or Advanced Custom Fields) plugin to enable product, pricing and season fields.', 'wildtours-plugin')
+                    . '</p></div>';
+            });
+
             return;
         }
 
-        (new Groups\SafariFields())->register();
+        $groups = apply_filters(
+            'pwt/scf_field_groups',
+            self::FIELD_GROUPS
+        );
 
-        (new Groups\PackageFields())->register();
+        foreach ($groups as $groupClass) {
 
-        (new Groups\ResortFields())->register();
+            $group = $this->make($groupClass);
 
-        (new Groups\VehicleFields())->register();
+            if (!$group instanceof FieldGroupInterface) {
+                continue;
+            }
 
-        (new Groups\DestinationFields())->register();
-
-        (new Groups\TestimonialFields())->register();
-
-        (new Groups\FAQFields())->register();
+            $group->register();
+        }
     }
 }

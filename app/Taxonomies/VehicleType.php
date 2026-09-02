@@ -1,8 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace PWT\Taxonomies;
 
-class VehicleType extends Taxonomy
+defined('ABSPATH') || exit;
+
+/**
+ * Vehicle Type taxonomy.
+ */
+final class VehicleType extends Taxonomy
 {
     protected string $taxonomy = 'pwt_vehicle_type';
 
@@ -12,6 +19,5 @@ class VehicleType extends Taxonomy
 
     protected array $postTypes = [
         'pwt_vehicle',
-        'pwt_safari'
     ];
 }

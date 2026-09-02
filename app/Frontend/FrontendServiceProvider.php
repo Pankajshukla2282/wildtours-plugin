@@ -1,29 +1,46 @@
 <?php
 
-namespace PWT\Frontend;
+declare(strict_types=1);
 
-use PWT\Core\ServiceProvider;
+namespace PWT\Frontend;
 
 defined('ABSPATH') || exit;
 
-class FrontendServiceProvider extends ServiceProvider
+use PWT\Core\ServiceProvider;
+
+final class FrontendServiceProvider extends ServiceProvider
 {
+    /**
+     * Frontend modules that should be booted when available.
+     *
+     * @var array<class-string>
+     */
+    private const MODULES = [
+        Assets::class,
+        TemplateLoader::class,
+        ArchiveFilters::class,
+        AvailabilityCalendar::class,
+        Seo::class,
+        Shortcodes::class,
+    ];
+
+    public function register(): void
+    {
+        // Reserved for future bindings.
+    }
+
     public function boot(): void
     {
-        require_once PWT_PLUGIN_PATH . 'bookings/booking-manager.php';
-        require_once PWT_PLUGIN_PATH . 'bookings/ajax-booking.php';
-        require_once PWT_PLUGIN_PATH . 'bookings/booking-form.php';
+        foreach (self::MODULES as $module) {
+            if (!class_exists($module)) {
+                continue;
+            }
 
-        (new \PWT\Bookings\BookingManager())->register();
-        (new \PWT\Bookings\AjaxBooking())->register();
-        (new \PWT\Payments\PaymentManager())->register();
+            $instance = $this->make($module);
 
-        if (!is_admin()) {
-            (new Assets())->register();
-            (new Shortcodes())->register();
-            (new TemplateLoader())->register();
-            (new Seo())->register();
-            (new ArchiveFilters())->register();
+            if (method_exists($instance, 'register')) {
+                $instance->register();
+            }
         }
     }
 }
