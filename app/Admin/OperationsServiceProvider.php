@@ -9,7 +9,7 @@ final class OperationsServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if (is_admin() && current_user_can('manage_options')) {
-            $this->make(OperationsDashboard::class)->register();
+            // Operations submenu is registered in Menu.php - skip to avoid duplicate
         }
     }
 }
