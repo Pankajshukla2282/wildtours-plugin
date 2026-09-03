@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Panna Wild Tour
  * Description: Core content, booking, availability, pricing, inventory, payments and integrations for Panna Wild Tour.
- * Version: 2.5.33
+ * Version: 2.5.34
  * Author: Panna Wild Tour
  * Author URI: https://www.pannawildtour.com
  * Requires at least: 6.7
