@@ -12,13 +12,8 @@ class FAQ extends PostType
 
     protected string $plural='FAQs';
 
-    protected string $menuIcon = 'dashicons-editor-help';
-
-    protected function args(): array
+    protected function menuIcon(): string
     {
-        $args = parent::args();
-        $args['show_in_menu'] = false;
-
-        return $args;
+        return 'dashicons-editor-help';
     }
 }

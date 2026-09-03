@@ -11,7 +11,7 @@ final class AvailabilityService
     {
         $row = $this->repository->get($resourceId, $resourceType, $date);
         if (!$row) {
-            return 0; // Unknown capacity is not configured and must not be reservable.
+            return -1; // Unknown capacity: do not falsely report unavailable.
         }
         if (($row['status'] ?? 'open') !== 'open') {
             return 0;
@@ -22,6 +22,6 @@ final class AvailabilityService
     public function isAvailable(int $resourceId, string $resourceType, string $date, int $quantity = 1): bool
     {
         $remaining = $this->remaining($resourceId, $resourceType, $date);
-        return $remaining >= max(1, $quantity);
+        return $remaining < 0 || $remaining >= max(1, $quantity);
     }
 }

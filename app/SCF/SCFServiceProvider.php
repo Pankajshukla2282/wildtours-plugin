@@ -21,8 +21,6 @@ use PWT\SCF\Groups\LocalTripFields;
 use PWT\SCF\Groups\RoomTypeFields;
 use PWT\SCF\Groups\RoomUnitFields;
 use PWT\SCF\Groups\SafariScheduleFields;
-use PWT\SCF\Groups\NavigationFields;
-use PWT\SCF\Groups\SeasonFields;
 
 /**
  * Registers all SCF/ACF field groups.
@@ -48,8 +46,6 @@ final class SCFServiceProvider extends ServiceProvider
         TestimonialFields::class,
         ReviewFields::class,
         FAQFields::class,
-        NavigationFields::class,
-        SeasonFields::class,
     ];
 
     /**
@@ -77,16 +73,6 @@ final class SCFServiceProvider extends ServiceProvider
             !function_exists('scf_register_field_group')
             && !function_exists('acf_add_local_field_group')
         ) {
-            add_action('admin_notices', function (): void {
-                if (!current_user_can('activate_plugins')) {
-                    return;
-                }
-
-                echo '<div class="notice notice-warning"><p>'
-                    . esc_html__('Panna Wild Tour content fields are inactive. Install and activate the Secure Custom Fields (or Advanced Custom Fields) plugin to enable product, pricing and season fields.', 'wildtours-plugin')
-                    . '</p></div>';
-            });
-
             return;
         }
 

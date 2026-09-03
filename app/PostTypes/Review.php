@@ -12,5 +12,8 @@ class Review extends PostType
 
     protected string $plural = 'Reviews';
 
-    protected string $menuIcon = 'dashicons-star-filled';
+    protected function menuIcon(): string
+    {
+        return 'dashicons-star-filled';
+    }
 }

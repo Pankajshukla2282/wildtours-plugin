@@ -1,0 +1,3 @@
+<?php
+declare(strict_types=1); namespace PWT\Staff\CRM; defined('ABSPATH')||exit;
+final class CommunicationRepository { public const POST_TYPE='pwt_customer_communication'; public function register():void{register_post_type(self::POST_TYPE,['label'=>'Customer Communications','public'=>false,'show_ui'=>false,'supports'=>['title']]);} public function create(array $d):int{$id=wp_insert_post(['post_type'=>self::POST_TYPE,'post_status'=>'publish','post_title'=>sanitize_text_field($d['title']??'Customer Communication')]);if(is_wp_error($id))return 0;foreach(['customer_id','booking_id','channel','message','user_id','occurred_at'] as $k)update_post_meta($id,'_pwt_comm_'.$k,$d[$k]??($k==='occurred_at'?current_time('mysql'):''));return(int)$id;} }

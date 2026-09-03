@@ -7,12 +7,7 @@ final class ReportingDashboard
 {
     public function register(): void
     {
-        add_action('admin_menu', [$this, 'menus'], 30);
-    }
-
-    public function menus(): void
-    {
-        add_submenu_page(PWT_ADMIN_MENU_SLUG, __('Reports','wildtours-plugin'), __('Reports','wildtours-plugin'), 'manage_options', 'pwt-reports', [$this,'render']);
+        add_submenu_page('pwt-dashboard', __('Reports','wildtours-plugin'), __('Reports','wildtours-plugin'), 'manage_options', 'pwt-reports', [$this,'render']);
     }
 
     public function render(): void
@@ -20,7 +15,7 @@ final class ReportingDashboard
         $to = isset($_GET['to']) ? sanitize_text_field(wp_unslash($_GET['to'])) : current_time('Y-m-d');
         $from = isset($_GET['from']) ? sanitize_text_field(wp_unslash($_GET['from'])) : gmdate('Y-m-d', strtotime('-30 days'));
         $report = new ReportService();
-        $summary = $report->summaryWithMargin($from, $to);
+        $summary = $report->summary($from, $to);
         $statuses = $report->bookingsByStatus($from, $to);
         $services = $report->topServices($from, $to);
         ?>

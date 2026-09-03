@@ -17,7 +17,6 @@ class Shortcodes
         add_shortcode('pwt_reviews', [$this, 'reviews']);
         add_shortcode('pwt_contact_card', [$this, 'contactCard']);
         add_shortcode('pwt_booking_form', [$this, 'bookingForm']);
-        add_shortcode('pwt_contact_form', [$this, 'contactForm']);
         add_shortcode('pwt_payment_page', [$this, 'paymentPage']);
     }
 
@@ -59,7 +58,6 @@ class Shortcodes
             'post_type' => 'pwt_package',
             'post_status' => 'publish',
             'posts_per_page' => 6,
-            'no_found_rows' => true,
         ];
 
         if (!empty($featuredIds)) {
@@ -84,7 +82,6 @@ class Shortcodes
             'post_type' => 'pwt_safari',
             'post_status' => 'publish',
             'posts_per_page' => 6,
-            'no_found_rows' => true,
         ]);
 
         return $this->renderCardsSection(
@@ -101,7 +98,6 @@ class Shortcodes
             'post_type' => 'pwt_destination',
             'post_status' => 'publish',
             'posts_per_page' => 6,
-            'no_found_rows' => true,
         ]);
 
         return $this->renderCardsSection(
@@ -118,7 +114,6 @@ class Shortcodes
             'post_type' => 'pwt_testimonial',
             'post_status' => 'publish',
             'posts_per_page' => 4,
-            'no_found_rows' => true,
         ]);
 
         ob_start();
@@ -160,7 +155,6 @@ class Shortcodes
             'post_type' => 'pwt_faq',
             'post_status' => 'publish',
             'posts_per_page' => 10,
-            'no_found_rows' => true,
         ]);
 
         ob_start();
@@ -202,7 +196,6 @@ class Shortcodes
             'post_type' => 'pwt_review',
             'post_status' => 'publish',
             'posts_per_page' => 6,
-            'no_found_rows' => true,
         ]);
 
         ob_start();
@@ -231,7 +224,7 @@ class Shortcodes
         return ob_get_clean();
     }
 
-public function contactCard(): string
+    public function contactCard(): string
     {
         $settings = get_option('pwt_settings', []);
         $company = $settings['company_name'] ?? get_bloginfo('name');
@@ -272,17 +265,6 @@ public function contactCard(): string
     public function bookingForm(): string
     {
         return (new \PWT\Bookings\BookingForm())->render();
-    }
-
-    public function contactForm(): string
-    {
-        $fluentShortcode = \PWT\Integrations\FluentForms::shortcode(\PWT\Integrations\FluentContactHandler::FORM_TITLE);
-
-        if ($fluentShortcode !== '') {
-            return do_shortcode($fluentShortcode); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-        }
-
-        return $this->bookingForm();
     }
 
     public function paymentPage(): string
@@ -476,7 +458,9 @@ public function contactCard(): string
                         $meta = $metaKey ? get_post_meta(get_the_ID(), $metaKey, true) : '';
                         ?>
                         <article class="pwt-card">
-                            <?php echo $this->cardImageMarkup(get_the_ID()); ?>
+                            <?php if (has_post_thumbnail()) : ?>
+                                <div class="pwt-card-image"><?php echo get_the_post_thumbnail(get_the_ID(), 'large'); ?></div>
+                            <?php endif; ?>
                             <div class="pwt-card-body">
                                 <h3><?php echo esc_html(get_the_title()); ?></h3>
                                 <?php if ($meta) : ?>
@@ -500,55 +484,5 @@ public function contactCard(): string
         <?php
 
         return ob_get_clean();
-    }
-
-    /**
-     * Curated library images for featured package cards.
-     *
-     * Maps package post IDs to attachment IDs so cards render contextual
-     * photos instead of the generic placeholder cover. Filterable so the
-     * mapping can be adjusted per installation.
-     *
-     * @return array<int, int>
-     */
-    private function packageCardImages(): array
-    {
-        return (array) apply_filters('pwt/package_card_images', [
-            660 => 884, // 2N/3D Panna Tiger Escape -> Bengal tiger
-            668 => 909, // 3N/4D Wildlife + Waterfall Discovery -> Pandav Falls
-            675 => 900, // 4N/5D Panna Photography Expedition -> Jeep safari
-            677 => 917, // 5N/6D Panna + Khajuraho Heritage Circuit -> Khajuraho temples
-            702 => 892, // 3N/4D Panna Wildlife and Birding Explorer -> Ken River
-            701 => 885, // 2N/3D Panna Tiger Reserve Family Escape -> Panna landscape
-            676 => 894, // 2N/3D Couple Jungle Retreat -> Hotel room
-        ]);
-    }
-
-    /**
-     * Build card image markup for a post.
-     *
-     * Prefers the curated library image for known packages, then the post
-     * thumbnail at a size guaranteed to exist on disk, and finally an empty
-     * string when no image is available.
-     */
-    private function cardImageMarkup(int $postId): string
-    {
-        $images = $this->packageCardImages();
-
-        if (isset($images[$postId])) {
-            $markup = wp_get_attachment_image($images[$postId], 'large', false, [
-                'alt' => esc_attr(get_the_title($postId)),
-            ]);
-
-            if ($markup) {
-                return '<div class="pwt-card-image">' . $markup . '</div>';
-            }
-        }
-
-        if (has_post_thumbnail($postId)) {
-            return '<div class="pwt-card-image">' . get_the_post_thumbnail($postId, 'medium_large') . '</div>';
-        }
-
-        return '';
     }
 }

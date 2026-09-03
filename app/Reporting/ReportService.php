@@ -39,17 +39,7 @@ final class ReportService
             'customers' => (int)$wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*) FROM {$c} WHERE created_at BETWEEN %s AND %s", $from.' 00:00:00', $to.' 23:59:59'
             )),
-            'vendor_costs' => (float)$wpdb->get_var($wpdb->prepare(
-                "SELECT COALESCE(SUM(bi.cost),0) FROM {$b} b INNER JOIN " . Schema::tables()['items'] . " bi ON bi.booking_id=b.id WHERE b.created_at BETWEEN %s AND %s", $from.' 00:00:00', $to.' 23:59:59'
-            )),
         ];
-    }
-
-    public function summaryWithMargin(string $from, string $to): array
-    {
-        $summary = $this->summary($from, $to);
-        $summary['estimated_margin'] = round((float)$summary['gross_booking_value'] - (float)$summary['vendor_costs'], 2);
-        return $summary;
     }
 
     public function bookingsByStatus(string $from, string $to): array
@@ -72,10 +62,10 @@ final class ReportService
         $items = Schema::tables()['items'];
         $bookings = Schema::tables()['bookings'];
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT bi.item_type, bi.object_id AS item_id, SUM(bi.quantity) AS quantity, COALESCE(SUM(bi.total),0) AS value
+            "SELECT bi.item_type, bi.item_id, SUM(bi.quantity) AS quantity, COALESCE(SUM(bi.total),0) AS value
              FROM {$items} bi INNER JOIN {$bookings} b ON b.id=bi.booking_id
              WHERE b.created_at BETWEEN %s AND %s
-             GROUP BY bi.item_type, bi.object_id ORDER BY value DESC LIMIT 20",
+             GROUP BY bi.item_type, bi.item_id ORDER BY value DESC LIMIT 20",
             sanitize_text_field($from).' 00:00:00',
             sanitize_text_field($to).' 23:59:59'
         ), ARRAY_A) ?: [];

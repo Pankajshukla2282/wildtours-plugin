@@ -27,87 +27,57 @@
             return;
         }
 
-        const packageField = form.querySelector("[name='package_id']");
-        const dateField = form.querySelector("[name='travel_date']");
-        const personsField = form.querySelector("[name='persons']");
+        updateMessage(message, window.pwtFrontend.messages.submitting, "");
 
-        if (!packageField || !dateField || !personsField) {
-            return;
-        }
-
-        const packageId = packageField.value;
-        const travelDate = dateField.value;
-        const persons = personsField.value;
-
-        if (!packageId || !travelDate || !persons) {
-            updateMessage(message, "<?php esc_html_e('Please fill in all fields.', 'wildtours-plugin'); ?>", "is-error");
-            return;
-        }
-
-        updateMessage(message, "<?php esc_html_e('Checking availability...', 'wildtours-plugin'); ?>", "");
-
-        const estimatePayload = new FormData();
-        estimatePayload.append("action", "pwt_quote_booking");
-        estimatePayload.append("nonce", form.querySelector("[name='nonce']")?.value ?? "");
-        estimatePayload.append("package_id", packageId);
-        estimatePayload.append("travel_date", travelDate);
-        estimatePayload.append("persons", persons);
+        const formData = new FormData(form);
 
         try {
-            const estimateResponse = await fetch(window.pwtFrontend.ajaxUrl, {
+            const response = await fetch(window.pwtFrontend.ajaxUrl, {
                 method: "POST",
-                body: estimatePayload,
+                body: formData,
                 credentials: "same-origin"
             });
 
-            const estimatePayloadData = await estimateResponse.json();
+            const payload = await response.json();
 
-            if (!estimateResponse.ok || !estimatePayloadData.success) {
-                const errorText = estimatePayloadData.data && estimatePayloadData.data.message
-                    ? estimatePayloadData.data.message
-                    : "<?php esc_html_e('Availability check failed.', 'wildtours-plugin'); ?>";
+            if (!response.ok || !payload.success) {
+                const errorText = payload && payload.data && payload.data.message
+                    ? payload.data.message
+                    : window.pwtFrontend.messages.error;
 
                 updateMessage(message, errorText, "is-error");
                 return;
             }
 
-            const data = estimatePayloadData.data;
-            const remaining = data.remaining ?? 0;
-            const capacity = data.capacity ?? 0;
+            const successText = payload.data && payload.data.message
+                ? payload.data.message
+                : window.pwtFrontend.messages.success;
 
-            if (remaining < persons) {
-                updateMessage(message, "<?php esc_html_e('Insufficient inventory. Available: %1$s, Requested: %2$d'.replace('%1$s', String(capacity)).replace('%2$d', String(persons)), 'wildtours-plugin'); ?>", "is-error");
-                return;
-            }
+            const paymentUrl = payload.data && payload.data.payment_url
+                ? payload.data.payment_url
+                : "";
 
-            // Proceed to create the booking
-            const bookingPayload = new FormData();
-            bookingPayload.append("action", "pwt_booking");
-            bookingPayload.append("nonce", form.querySelector("[name='nonce']")?.value ?? "");
-            bookingPayload.append("package_id", packageId);
-            bookingPayload.append("travel_date", travelDate);
-            bookingPayload.append("persons", persons);
+            const advanceAmount = payload.data && payload.data.payment_advance_amount
+                ? payload.data.payment_advance_amount
+                : 0;
 
-            const bookingResponse = await fetch(window.pwtFrontend.ajaxUrl, {
-                method: "POST",
-                body: bookingPayload,
-                credentials: "same-origin"
-            });
+            form.reset();
+            updateMessage(message, successText, "is-success");
 
-            const bookingResult = await bookingResponse.json();
+            if (paymentUrl) {
+                const link = document.createElement("a");
+                link.href = paymentUrl;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.textContent = advanceAmount
+                    ? "Complete advance payment"
+                    : "Open payment page";
 
-            if (bookingResponse.ok && bookingResult.success) {
-                // Booking created successfully - redirect to payment or thank you page
-                window.location.href = "<?php echo esc_url(admin_url('admin.php?page=pwt-operations')); ?>?booking_id=" + bookingResult.data.booking_id;
-            } else {
-                const errorText = bookingResult.data && bookingResult.data.message
-                    ? bookingResult.data.message
-                    : "<?php esc_html_e('Booking creation failed.', 'wildtours-plugin'); ?>";
-                updateMessage(message, errorText, "is-error");
+                message.appendChild(document.createTextNode(" "));
+                message.appendChild(link);
             }
         } catch (error) {
-            updateMessage(message, "<?php esc_html_e('Error checking availability.', 'wildtours-plugin'); ?>", "is-error");
-            return;
+            updateMessage(message, window.pwtFrontend.messages.error, "is-error");
         }
     });
 

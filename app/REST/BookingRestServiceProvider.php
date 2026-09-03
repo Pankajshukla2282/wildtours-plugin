@@ -14,7 +14,7 @@ final class BookingRestServiceProvider extends ServiceProvider
                 'methods'=>'POST',
                 'callback'=>[$this,'create'],
                 'permission_callback'=>function(): bool {
-                    return is_user_logged_in() && current_user_can('pwt_manage_operations');
+                    return is_user_logged_in() || current_user_can('manage_options');
                 },
             ]);
         });

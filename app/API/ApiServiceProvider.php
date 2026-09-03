@@ -11,7 +11,9 @@ class ApiServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        $this->make(ArchitectureRestApi::class)->register();
-        $this->make(RestApi::class)->register();
+        add_action('rest_api_init', function (): void {
+            $this->make(ArchitectureRestApi::class)->register();
+        });
+        (new RestApi())->register();
     }
 }

@@ -12,5 +12,8 @@ class Testimonial extends PostType
 
     protected string $plural='Testimonials';
 
-    protected string $menuIcon = 'dashicons-format-quote';
+    protected function menuIcon(): string
+    {
+        return 'dashicons-format-quote';
+    }
 }

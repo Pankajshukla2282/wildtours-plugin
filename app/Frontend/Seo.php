@@ -6,16 +6,6 @@ defined('ABSPATH') || exit;
 
 class Seo
 {
-    private const SCHEMA_TYPES = [
-        'pwt_package' => 'TouristTrip',
-        'pwt_safari' => 'TouristTrip',
-        'pwt_local_trip' => 'TouristTrip',
-        'pwt_destination' => 'TouristDestination',
-        'pwt_resort' => 'Hotel',
-        'pwt_restaurant' => 'Restaurant',
-        'pwt_room_type' => 'HotelRoom',
-    ];
-
     public function register(): void
     {
         add_action('wp_head', [$this, 'renderHeadTags'], 5);
@@ -23,9 +13,7 @@ class Seo
 
     public function renderHeadTags(): void
     {
-        $supported = (array) apply_filters('pwt/seo/post_types', array_keys(self::SCHEMA_TYPES));
-
-        if (!is_singular($supported)) {
+        if (!is_singular(['pwt_package', 'pwt_safari', 'pwt_destination'])) {
             return;
         }
 
@@ -52,21 +40,17 @@ class Seo
 
         $structuredData = $this->structuredData($postId, $title, $description, $url, $image);
 
-        if ($structuredData) {
-            echo '<script type="application/ld+json">' . wp_json_encode($structuredData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>' . "\n";
-        }
+        echo '<script type="application/ld+json">' . wp_json_encode($structuredData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>' . "\n";
     }
 
     private function structuredData(int $postId, string $title, string $description, string $url, string $image): array
     {
         $settings = get_option('pwt_settings', []);
         $provider = $settings['company_name'] ?? get_bloginfo('name');
-        $postType = get_post_type($postId);
-        $schemaType = self::SCHEMA_TYPES[$postType] ?? 'TouristTrip';
 
         $data = [
             '@context' => 'https://schema.org',
-            '@type' => $schemaType,
+            '@type' => 'TouristTrip',
             'name' => $title,
             'description' => $description,
             'url' => $url,
@@ -86,24 +70,15 @@ class Seo
             $price = (float) get_post_meta($postId, 'regular_price', true);
         }
 
-        if ($price > 0 && in_array($schemaType, ['TouristTrip', 'Product', 'HotelRoom'], true)) {
+        if ($price > 0) {
             $data['offers'] = [
                 '@type' => 'Offer',
                 'price' => (string) $price,
-                'priceCurrency' => (string) ($settings['currency'] ?? 'INR'),
+                'priceCurrency' => 'INR',
                 'availability' => 'https://schema.org/InStock',
             ];
         }
 
-        $city = (string) get_post_meta($postId, 'city', true);
-        $address = [];
-        if ($city !== '') {
-            $address['addressLocality'] = $city;
-        }
-        if ($address) {
-            $data['address'] = ['@type' => 'PostalAddress'] + $address;
-        }
-
-        return (array) apply_filters('pwt/seo/structured_data', $data, $postId);
+        return $data;
     }
 }

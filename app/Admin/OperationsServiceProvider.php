@@ -8,9 +8,8 @@ final class OperationsServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        if (is_admin() && current_user_can('pwt_manage_operations')) {
+        if (is_admin() && current_user_can('manage_options')) {
             $this->make(OperationsDashboard::class)->register();
-            $this->make(BookingDetailPage::class)->register();
         }
     }
 }

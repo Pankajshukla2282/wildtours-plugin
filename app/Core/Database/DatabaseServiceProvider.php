@@ -10,7 +10,6 @@ final class DatabaseServiceProvider extends ServiceProvider
     public function boot(): void
     {
         add_action('admin_init', [$this, 'maybeUpgrade']);
-        $this->make(\PWT\Performance\PerformanceMonitor::class)->register();
     }
     public function maybeUpgrade(): void
     {

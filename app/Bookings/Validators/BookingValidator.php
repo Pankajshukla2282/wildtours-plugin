@@ -51,26 +51,6 @@ final class BookingValidator
             ];
         }
 
-        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $clean['travel_date']);
-        $errors = \DateTimeImmutable::getLastErrors();
-        if (
-            !$date
-            || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))
-            || $date->format('Y-m-d') !== $clean['travel_date']
-        ) {
-            return [
-                'success' => false,
-                'message' => __('Please enter a valid travel date.', 'wildtours-plugin'),
-            ];
-        }
-
-        if ($clean['travel_date'] < current_time('Y-m-d')) {
-            return [
-                'success' => false,
-                'message' => __('Travel date cannot be in the past.', 'wildtours-plugin'),
-            ];
-        }
-
         return [
             'success' => true,
             'data' => $clean,

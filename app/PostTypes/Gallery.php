@@ -12,13 +12,8 @@ class Gallery extends PostType
 
     protected string $plural='Galleries';
 
-    protected string $menuIcon = 'dashicons-format-gallery';
-
-    protected function args(): array
+    protected function menuIcon(): string
     {
-        $args = parent::args();
-        $args['show_in_menu'] = false;
-
-        return $args;
+        return 'dashicons-format-gallery';
     }
 }

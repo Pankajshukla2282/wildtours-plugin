@@ -12,5 +12,8 @@ class Package extends PostType
 
     protected string $plural = 'Packages';
 
-    protected string $menuIcon = 'dashicons-location-alt';
+    protected function menuIcon(): string
+    {
+        return 'dashicons-location-alt';
+    }
 }

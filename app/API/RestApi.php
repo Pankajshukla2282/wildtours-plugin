@@ -2,19 +2,12 @@
 
 namespace PWT\API;
 
-use PWT\Bookings\Services\BookingService;
-use PWT\Documents\DocumentService;
+use PWT\Frontend\Pricing;
 
 defined('ABSPATH') || exit;
 
 class RestApi
 {
-    public function __construct(
-        private readonly BookingService $bookingService,
-        private readonly DocumentService $documents
-    ) {
-    }
-
     public function register(): void
     {
         add_action('rest_api_init', [$this, 'routes']);
@@ -28,7 +21,12 @@ class RestApi
             'permission_callback' => [$this, 'canReadPublicData'],
         ]);
 
-        // Availability is owned by ArchitectureRestApi to keep one canonical public route.
+        register_rest_route('pwt/v1', '/availability', [
+            'methods' => 'GET',
+            'callback' => [$this, 'availability'],
+            'permission_callback' => [$this, 'canReadPublicData'],
+        ]);
+
         register_rest_route('pwt/v1', '/booking', [
             'methods' => 'POST',
             'callback' => [$this, 'booking'],
@@ -40,15 +38,6 @@ class RestApi
                 'persons' => ['required' => true],
             ],
         ]);
-
-        foreach (['voucher', 'invoice'] as $document) {
-            register_rest_route('pwt/v1', '/bookings/(?P<id>\d+)/' . $document, [
-                'methods' => 'GET',
-                'callback' => [$this, 'document'],
-                'permission_callback' => [$this, 'canManageBookings'],
-                'args' => ['id' => ['required' => true]],
-            ]);
-        }
     }
 
     public function canReadPublicData(
@@ -70,7 +59,7 @@ class RestApi
             return $throttle;
         }
 
-        if (is_user_logged_in() && current_user_can('pwt_manage_operations')) {
+        if (is_user_logged_in() && current_user_can('edit_posts')) {
             return true;
         }
 
@@ -94,38 +83,6 @@ class RestApi
         );
     }
 
-    public function canManageBookings(\WP_REST_Request $request): bool|\WP_Error
-    {
-        return is_user_logged_in() && current_user_can('pwt_manage_operations')
-            ? true
-            : new \WP_Error(
-                'pwt_rest_forbidden',
-                __('Unauthorized document request.', 'wildtours-plugin'),
-                ['status' => 403]
-            );
-    }
-
-    public function document(\WP_REST_Request $request): \WP_REST_Response
-    {
-        $id = absint($request['id']);
-        $type = strpos($request->get_route(), 'voucher') !== false ? 'voucher' : 'invoice';
-
-        $document = $type === 'invoice'
-            ? $this->documents->invoice($id)
-            : $this->documents->voucher($id);
-
-        if (empty($document['booking_number'])) {
-            return new \WP_REST_Response(['message' => __('Booking not found.', 'wildtours-plugin')], 404);
-        }
-
-        return new \WP_REST_Response([
-            'type' => $type,
-            'booking_id' => $id,
-            'booking_number' => $document['booking_number'],
-            'html' => $document['html'],
-        ], 200);
-    }
-
     public function packages(\WP_REST_Request $request): \WP_REST_Response
     {
         $posts = get_posts([
@@ -146,6 +103,28 @@ class RestApi
         }, $posts);
 
         return new \WP_REST_Response(['data' => $items], 200);
+    }
+
+    public function availability(\WP_REST_Request $request): \WP_REST_Response
+    {
+        $packageId = absint((string) $request->get_param('package_id'));
+        $date = sanitize_text_field((string) $request->get_param('date'));
+
+        if (!$packageId || !$date) {
+            return new \WP_REST_Response(['message' => __('package_id and date are required.', 'wildtours-plugin')], 422);
+        }
+
+        if (!$this->isValidDate($date)) {
+            return new \WP_REST_Response(['message' => __('Date must be in YYYY-MM-DD format.', 'wildtours-plugin')], 422);
+        }
+
+        $available = \PWT\Frontend\AvailabilityCalendar::isDateAvailable($packageId, $date);
+
+        return new \WP_REST_Response([
+            'package_id' => $packageId,
+            'date' => $date,
+            'available' => $available,
+        ], 200);
     }
 
     public function booking(\WP_REST_Request $request): \WP_REST_Response
@@ -182,24 +161,34 @@ class RestApi
             return new \WP_REST_Response(['message' => __('Selected date is not available.', 'wildtours-plugin')], 409);
         }
 
-        $result = $this->bookingService->create([
-            'name' => $name,
-            'phone' => $phone,
-            'email' => $email,
-            'travel_date' => $travelDate,
-            'persons' => $persons,
-            'package_id' => $packageId,
-            'message' => $message,
-        ]);
+        $bookingId = wp_insert_post([
+            'post_type' => 'pwt_booking',
+            'post_status' => 'publish',
+            'post_title' => sprintf('%s - %s', $name, current_time('mysql')),
+        ], true);
 
-        if (!$result['success']) {
-            return new \WP_REST_Response(['message' => $result['message'] ?? __('Unable to create booking.', 'wildtours-plugin')], 422);
+        if (is_wp_error($bookingId)) {
+            return new \WP_REST_Response(['message' => __('Unable to create booking.', 'wildtours-plugin')], 500);
+        }
+
+        update_post_meta($bookingId, '_pwt_name', $name);
+        update_post_meta($bookingId, '_pwt_phone', $phone);
+        update_post_meta($bookingId, '_pwt_email', $email);
+        update_post_meta($bookingId, '_pwt_travel_date', $travelDate);
+        update_post_meta($bookingId, '_pwt_persons', $persons);
+        update_post_meta($bookingId, '_pwt_package_id', $packageId);
+        update_post_meta($bookingId, '_pwt_message', $message);
+
+        $estimate = [];
+        if ($packageId) {
+            $estimate = Pricing::calculateEstimate($packageId, $persons, $travelDate);
+            update_post_meta($bookingId, '_pwt_estimated_total', $estimate['estimated_total'] ?? 0);
+            update_post_meta($bookingId, '_pwt_estimate_season', $estimate['season_label'] ?? '');
         }
 
         return new \WP_REST_Response([
-            'booking_id' => $result['booking_id'],
-            'payment_url' => $result['payment_url'] ?? '',
-            'payment_advance_amount' => $result['payment_advance_amount'] ?? 0,
+            'booking_id' => $bookingId,
+            'estimate' => $estimate,
         ], 201);
     }
 

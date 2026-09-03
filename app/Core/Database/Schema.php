@@ -5,7 +5,7 @@ defined('ABSPATH') || exit;
 
 final class Schema
 {
-    public const VERSION = '2.9.0';
+    public const VERSION = '2.2.1';
 
     public static function tables(): array
     {
@@ -17,14 +17,6 @@ final class Schema
             'availability' => $wpdb->prefix . 'pwt_availability',
             'rates'        => $wpdb->prefix . 'pwt_rates',
             'payments'     => $wpdb->prefix . 'pwt_payments',
-            'holds'        => $wpdb->prefix . 'pwt_inventory_holds',
-            'audit'        => $wpdb->prefix . 'pwt_audit_log',
-            'travelers'    => $wpdb->prefix . 'pwt_travelers',
-            'vendors'      => $wpdb->prefix . 'pwt_vendors',
-            'vendor_rates' => $wpdb->prefix . 'pwt_vendor_rates',
-            'settlements'  => $wpdb->prefix . 'pwt_vendor_settlements',
-            'payment_events' => $wpdb->prefix . 'pwt_payment_events',
-            'package_components' => $wpdb->prefix . 'pwt_package_components',
         ];
     }
 
@@ -72,7 +64,6 @@ final class Schema
             deposit_due DECIMAL(12,2) NOT NULL DEFAULT 0,
             notes TEXT NULL,
             source VARCHAR(40) NULL,
-            quote_snapshot LONGTEXT NULL,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
             PRIMARY KEY (id),
@@ -94,19 +85,11 @@ final class Schema
             end_date DATE NULL,
             unit_price DECIMAL(12,2) NOT NULL DEFAULT 0,
             total DECIMAL(12,2) NOT NULL DEFAULT 0,
-            cost DECIMAL(12,2) NOT NULL DEFAULT 0,
-            vendor_id BIGINT UNSIGNED NULL,
-            vendor_name VARCHAR(255) NULL,
             meta LONGTEXT NULL,
             created_at DATETIME NOT NULL,
             PRIMARY KEY (id),
             KEY booking_id (booking_id),
-            KEY object_lookup (item_type, object_id),
-            KEY vendor_id (vendor_id)
-        ) $c;";
-
-        $sql[] = "CREATE TABLE {$t['package_components']} (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, package_id BIGINT UNSIGNED NOT NULL, resource_type VARCHAR(40) NOT NULL, resource_id BIGINT UNSIGNED NOT NULL, name VARCHAR(255) NULL, quantity INT UNSIGNED NOT NULL DEFAULT 1, offset_start INT NOT NULL DEFAULT 0, offset_end INT NOT NULL DEFAULT 0, required TINYINT(1) NOT NULL DEFAULT 1, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, PRIMARY KEY (id), KEY package_id (package_id), KEY resource_lookup (resource_type, resource_id)
+            KEY object_lookup (item_type, object_id)
         ) $c;";
 
         $sql[] = "CREATE TABLE {$t['availability']} (
@@ -149,7 +132,6 @@ final class Schema
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             booking_id BIGINT UNSIGNED NOT NULL,
             gateway VARCHAR(40) NOT NULL,
-            transaction_type VARCHAR(20) NOT NULL DEFAULT 'payment',
             transaction_id VARCHAR(190) NULL,
             status VARCHAR(30) NOT NULL DEFAULT 'pending',
             amount DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -162,130 +144,7 @@ final class Schema
             PRIMARY KEY (id),
             KEY booking_id (booking_id),
             KEY transaction_id (transaction_id),
-            KEY status (status),
-            KEY transaction_type (transaction_type),
-            UNIQUE KEY reference_unique (reference)
-        ) $c;";
-
-        $sql[] = "CREATE TABLE {$t['payment_events']} (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            provider VARCHAR(40) NOT NULL,
-            event_id VARCHAR(190) NOT NULL,
-            status VARCHAR(30) NOT NULL DEFAULT 'received',
-            payload_hash CHAR(64) NOT NULL,
-            processed_at DATETIME NULL,
-            error_message TEXT NULL,
-            created_at DATETIME NOT NULL,
-            updated_at DATETIME NOT NULL,
-            PRIMARY KEY (id),
-            UNIQUE KEY provider_event (provider, event_id),
             KEY status (status)
-        ) $c;";
-
-        $sql[] = "CREATE TABLE {$t['holds']} (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            booking_id BIGINT UNSIGNED NOT NULL,
-            resource_id BIGINT UNSIGNED NOT NULL,
-            resource_type VARCHAR(40) NOT NULL,
-            service_date DATE NOT NULL,
-            quantity INT UNSIGNED NOT NULL DEFAULT 1,
-            status VARCHAR(20) NOT NULL DEFAULT 'active',
-            expires_at DATETIME NOT NULL,
-            created_at DATETIME NOT NULL,
-            updated_at DATETIME NOT NULL,
-            PRIMARY KEY (id),
-            KEY booking_id (booking_id),
-            KEY resource_day (resource_type, resource_id, service_date),
-            KEY status_expiry (status, expires_at)
-        ) $c;";
-
-        $sql[] = "CREATE TABLE {$t['audit']} (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            entity_type VARCHAR(40) NOT NULL,
-            entity_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-            action VARCHAR(40) NOT NULL,
-            actor VARCHAR(190) NULL,
-            from_value LONGTEXT NULL,
-            to_value LONGTEXT NULL,
-            notes TEXT NULL,
-            created_at DATETIME NOT NULL,
-            PRIMARY KEY (id),
-            KEY entity (entity_type, entity_id),
-            KEY action (action),
-            KEY created_at (created_at)
-        ) $c;";
-
-        $sql[] = "CREATE TABLE {$t['travelers']} (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            booking_id BIGINT UNSIGNED NOT NULL,
-            first_name VARCHAR(100) NOT NULL,
-            last_name VARCHAR(100) NULL,
-            date_of_birth DATE NULL,
-            nationality VARCHAR(100) NULL,
-            passport_number VARCHAR(100) NULL,
-            email VARCHAR(190) NULL,
-            phone VARCHAR(50) NULL,
-            meta LONGTEXT NULL,
-            created_at DATETIME NOT NULL,
-            updated_at DATETIME NOT NULL,
-            PRIMARY KEY (id),
-            KEY booking_id (booking_id)
-        ) $c;";
-
-        $sql[] = "CREATE TABLE {$t['vendors']} (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            name VARCHAR(255) NOT NULL,
-            vendor_type VARCHAR(40) NOT NULL DEFAULT 'other',
-            contact_person VARCHAR(190) NULL,
-            email VARCHAR(190) NULL,
-            phone VARCHAR(50) NULL,
-            pan VARCHAR(30) NULL,
-            gstin VARCHAR(30) NULL,
-            bank_details TEXT NULL,
-            notes TEXT NULL,
-            status VARCHAR(20) NOT NULL DEFAULT 'active',
-            created_at DATETIME NOT NULL,
-            updated_at DATETIME NOT NULL,
-            PRIMARY KEY (id),
-            KEY vendor_type (vendor_type),
-            KEY status (status)
-        ) $c;";
-
-        $sql[] = "CREATE TABLE {$t['vendor_rates']} (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            vendor_id BIGINT UNSIGNED NOT NULL,
-            resource_type VARCHAR(40) NOT NULL,
-            resource_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-            rate_name VARCHAR(190) NULL,
-            unit_price DECIMAL(12,2) NOT NULL DEFAULT 0,
-            currency VARCHAR(3) NOT NULL DEFAULT 'INR',
-            start_date DATE NULL,
-            end_date DATE NULL,
-            priority INT NOT NULL DEFAULT 10,
-            notes TEXT NULL,
-            status VARCHAR(20) NOT NULL DEFAULT 'active',
-            created_at DATETIME NOT NULL,
-            updated_at DATETIME NOT NULL,
-            PRIMARY KEY (id),
-            KEY vendor_resource (vendor_id, resource_type, resource_id),
-            KEY vendor_active (vendor_id, status)
-        ) $c;";
-
-        $sql[] = "CREATE TABLE {$t['settlements']} (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            vendor_id BIGINT UNSIGNED NOT NULL,
-            booking_id BIGINT UNSIGNED NULL,
-            amount DECIMAL(12,2) NOT NULL DEFAULT 0,
-            currency VARCHAR(3) NOT NULL DEFAULT 'INR',
-            reference VARCHAR(190) NULL,
-            settled_at DATETIME NOT NULL,
-            notes TEXT NULL,
-            created_at DATETIME NOT NULL,
-            updated_at DATETIME NOT NULL,
-            PRIMARY KEY (id),
-            KEY vendor_id (vendor_id),
-            KEY booking_id (booking_id),
-            KEY settled_at (settled_at)
         ) $c;";
 
         foreach ($sql as $statement) {

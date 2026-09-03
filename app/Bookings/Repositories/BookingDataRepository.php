@@ -3,35 +3,14 @@ declare(strict_types=1);
 namespace PWT\Bookings\Repositories;
 defined('ABSPATH') || exit;
 use PWT\Core\Database\Schema;
-use PWT\Logging\AuditLog;
 
 final class BookingDataRepository
 {
-    public function __construct(private readonly AuditLog $audit)
-    {
-    }
-
     public function create(array $data): int
     {
         global $wpdb;
         $t = Schema::tables()['bookings'];
-        $number = '';
-        for ($attempt = 0; $attempt < 5; $attempt++) {
-            $candidate = 'PWT-' . gmdate('Ymd') . '-' . strtoupper(wp_generate_password(8, false, false));
-            $exists = (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$t} WHERE booking_number = %s",
-                $candidate
-            ));
-            if ($exists === 0) {
-                $number = $candidate;
-                break;
-            }
-        }
-
-        if ($number === '') {
-            return 0;
-        }
-
+        $number = 'PWT-' . gmdate('Ymd') . '-' . strtoupper(wp_generate_password(6, false, false));
         $now = current_time('mysql');
 
         $wpdb->insert($t, [
@@ -54,15 +33,7 @@ final class BookingDataRepository
             'created_at' => $now,
             'updated_at' => $now,
         ]);
-        $id = (int)$wpdb->insert_id;
-
-        if ($id) {
-            $this->audit->record('booking', $id, 'booking.created', [
-                'to' => ['status' => sanitize_key((string)($data['status'] ?? 'pending'))],
-            ]);
-        }
-
-        return $id;
+        return (int)$wpdb->insert_id;
     }
 
     public function find(int $id): array
@@ -75,23 +46,12 @@ final class BookingDataRepository
     public function updateStatus(int $id, string $status): bool
     {
         global $wpdb;
-        $status = sanitize_key($status);
-        $current = (string)($this->find($id)['status'] ?? '');
-        $updated = false !== $wpdb->update(
+        return false !== $wpdb->update(
             Schema::tables()['bookings'],
-            ['status' => $status, 'updated_at' => current_time('mysql')],
+            ['status' => sanitize_key($status), 'updated_at' => current_time('mysql')],
             ['id' => $id],
             ['%s','%s'],
             ['%d']
         );
-
-        if ($updated && $current !== $status) {
-            $this->audit->record('booking', $id, 'booking.status', [
-                'from' => ['status' => $current],
-                'to' => ['status' => $status],
-            ]);
-        }
-
-        return $updated;
     }
 }
