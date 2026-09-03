@@ -8,26 +8,14 @@ defined('ABSPATH') || exit;
 
 class PaymentManager
 {
-    private static ?array $settings = null;
-
     public function register(): void
     {
         add_action('init', [$this, 'handlePortalSubmission']);
     }
 
-    private static function getSettings(): array
-    {
-        if (self::$settings !== null) {
-            return self::$settings;
-        }
-
-        self::$settings = get_option('pwt_settings', []);
-        return self::$settings;
-    }
-
     public static function createIntent(int $bookingId, float $estimatedTotal): array
     {
-        $settings = self::getSettings();
+        $settings = get_option('pwt_settings', []);
         $advancePercent = max(1, min(100, (int) ($settings['payment_advance_percent'] ?? 30)));
         $gateway = GatewayFactory::fromSettings($settings);
         $intent = $gateway->createIntent($bookingId, $estimatedTotal, $advancePercent);
@@ -53,7 +41,7 @@ class PaymentManager
 
     public static function paymentUrl(string $token): string
     {
-        $settings = self::getSettings();
+        $settings = get_option('pwt_settings', []);
         $baseUrl = trim((string) ($settings['payment_page_url'] ?? ''));
 
         if ($baseUrl === '') {
@@ -98,7 +86,7 @@ class PaymentManager
             return [];
         }
 
-        $settings = self::getSettings();
+        $settings = get_option('pwt_settings', []);
 
         return [
             'booking_id' => $bookingId,
@@ -141,7 +129,7 @@ class PaymentManager
 
         $reference = sanitize_text_field($_POST['payment_reference'] ?? '');
         $method = sanitize_text_field($_POST['payment_method'] ?? 'upi');
-        $settings = self::getSettings();
+        $settings = get_option('pwt_settings', []);
         $allowedMethods = self::allowedPaymentMethods($settings);
 
         if ($reference === '' || !in_array($method, $allowedMethods, true)) {
@@ -193,7 +181,7 @@ class PaymentManager
     public static function allowedPaymentMethods(array $settings = []): array
     {
         if (empty($settings)) {
-            $settings = self::getSettings();
+            $settings = get_option('pwt_settings', []);
         }
 
         $raw = (string) ($settings['payment_methods'] ?? 'upi,bank_transfer,cash');

@@ -65,7 +65,13 @@ abstract class Taxonomy implements TaxonomyInterface
      */
     public function register(): void
     {
-        add_action('init', [$this, 'create']);
+        // See PostType::register(): providers may boot after init has begun.
+        if (did_action('init')) {
+            $this->create();
+            return;
+        }
+
+        add_action('init', [$this, 'create'], 5);
     }
 
     /**

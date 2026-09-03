@@ -87,7 +87,15 @@ abstract class PostType implements PostTypeInterface
      */
     public function register(): void
     {
-        add_action('init', [$this, 'create']);
+        // Providers are booted during WordPress init. Register immediately when
+        // init has already fired; otherwise wait for init. This prevents CPTs
+        // from silently missing registration on admin requests.
+        if (did_action('init')) {
+            $this->create();
+            return;
+        }
+
+        add_action('init', [$this, 'create'], 5);
     }
 
     /**
@@ -133,6 +141,7 @@ abstract class PostType implements PostTypeInterface
             'labels'          => $this->labels(),
             'public'          => $this->public,
             'show_in_rest'    => $this->showInRest,
+            'show_in_menu'    => 'pwt-dashboard',
             'menu_position'   => $this->menuPosition,
             'menu_icon'       => $this->menuIcon,
             'supports'        => apply_filters(
