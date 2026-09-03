@@ -13,9 +13,6 @@ final class StaffAdmin
     public function register(): void { add_action('admin_menu', [$this,'menus'], 36); add_action('admin_init', [$this,'handleCreate']); }
     public function menus(): void
     {
-        add_menu_page(__('My PWT Work','wildtours-plugin'),__('My PWT Work','wildtours-plugin'),Capabilities::ACCESS_DASHBOARD,'pwt-staff-dashboard',[$this,'dashboard'],'dashicons-groups',31);
-        add_submenu_page('pwt-staff-dashboard',__('My Dashboard','wildtours-plugin'),__('My Dashboard','wildtours-plugin'),Capabilities::ACCESS_DASHBOARD,'pwt-staff-dashboard',[$this,'dashboard']);
-        add_submenu_page('pwt-staff-dashboard',__('Staff','wildtours-plugin'),__('Staff','wildtours-plugin'),Capabilities::MANAGE_STAFF,'pwt-staff',[$this,'staff']);
     }
     public function handleCreate(): void
     {
