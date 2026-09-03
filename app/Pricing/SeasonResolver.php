@@ -7,6 +7,12 @@ final class SeasonResolver
 {
     public function resolve(string $date): array
     {
+        $transientKey = 'pwt_season_resolver_' . md5($date);
+        $cached = get_transient($transientKey);
+        if ($cached !== false) {
+            return $cached;
+        }
+
         $terms = get_terms([
             'taxonomy' => 'pwt_season',
             'hide_empty' => false,
@@ -17,6 +23,7 @@ final class SeasonResolver
 
         $timestamp = strtotime($date);
         if (!$timestamp) {
+            set_transient($transientKey, [], HOUR_IN_SECONDS);
             return [];
         }
 
@@ -27,10 +34,13 @@ final class SeasonResolver
                 $startTs = strtotime($start . '-01');
                 $endTs = strtotime($end . '-01 +1 month -1 day');
                 if ($startTs && $endTs && $timestamp >= $startTs && $timestamp <= $endTs) {
-                    return ['id'=>(int)$term->term_id,'name'=>$term->name,'slug'=>$term->slug];
+                    $result = ['id'=>(int)$term->term_id,'name'=>$term->name,'slug'=>$term->slug];
+                    set_transient($transientKey, $result, HOUR_IN_SECONDS);
+                    return $result;
                 }
             }
         }
+        set_transient($transientKey, [], HOUR_IN_SECONDS);
         return [];
     }
 }
