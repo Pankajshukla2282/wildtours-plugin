@@ -61,7 +61,20 @@ class Menu
             'pwt-reports',
             [$this, 'reports']
         );
-    }
+
+        // Operations and utility submenu items
+        add_submenu_page(
+            'pwt-dashboard',
+            __('Operations', 'wildtours-plugin'),
+            __('Operations', 'wildtours-plugin'),
+            'manage_options',
+            'pwt-operations',
+            [$this, 'operations']
+        );
+
+        // Separator - WordPress adds this automatically between groups
+        // Availability and Pricing are accessible via the Operations page quick links
+}
 
     public function dashboard(): void
     {
