@@ -95,4 +95,9 @@ class Menu
     {
         include Paths::path('app/Admin/Views/reports.php');
     }
+
+    public function operations(): void
+    {
+        include Paths::path('app/Admin/Views/operations.php');
+    }
 }
