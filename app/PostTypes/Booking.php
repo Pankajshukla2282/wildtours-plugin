@@ -37,7 +37,7 @@ final class Booking extends PostType
             'labels'          => $this->labels(),
             'public'          => false,
             'show_ui'         => true,
-            'show_in_menu'    => 'pwt-dashboard',
+            'show_in_menu'    => false,
             'show_in_rest'    => false,
             'menu_position'   => $this->menuPosition,
             'menu_icon'       => $this->menuIcon,

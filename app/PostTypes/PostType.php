@@ -141,7 +141,7 @@ abstract class PostType implements PostTypeInterface
             'labels'          => $this->labels(),
             'public'          => $this->public,
             'show_in_rest'    => $this->showInRest,
-            'show_in_menu'    => 'pwt-dashboard',
+            'show_in_menu'    => false,
             'menu_position'   => $this->menuPosition,
             'menu_icon'       => $this->menuIcon,
             'supports'        => apply_filters(
