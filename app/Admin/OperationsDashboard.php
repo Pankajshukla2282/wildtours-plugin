@@ -13,10 +13,9 @@ final class OperationsDashboard
 
     public function menus(): void
     {
+        // Operations added to pwt-dashboard (essential only)
         add_submenu_page('pwt-dashboard', __('Operations','wildtours-plugin'), __('Operations','wildtours-plugin'), 'manage_options', 'pwt-operations', [$this,'operations']);
-        add_submenu_page('pwt-dashboard', __('Availability','wildtours-plugin'), __('Availability','wildtours-plugin'), 'manage_options', 'pwt-availability', [$this,'availability']);
-        add_submenu_page('pwt-dashboard', __('Pricing','wildtours-plugin'), __('Pricing','wildtours-plugin'), 'manage_options', 'pwt-pricing', [$this,'pricing']);
-        add_submenu_page('pwt-dashboard', __('Customers','wildtours-plugin'), __('Customers','wildtours-plugin'), 'manage_options', 'pwt-customers', [$this,'customers']);
+        // Availability, Pricing, Customers have dedicated menus - not added here to avoid dashboard overflow
     }
 
     public function operations(): void

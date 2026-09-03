@@ -25,6 +25,7 @@ class Menu
             30
         );
 
+        // Essential submenu items
         add_submenu_page(
             'pwt-dashboard',
             __('Dashboard', 'wildtours-plugin'),
@@ -51,6 +52,15 @@ class Menu
             'pwt-content-forms',
             [$this, 'contentForms']
         );
+
+        add_submenu_page(
+            'pwt-dashboard',
+            __('Reports', 'wildtours-plugin'),
+            __('Reports', 'wildtours-plugin'),
+            'manage_options',
+            'pwt-reports',
+            [$this, 'reports']
+        );
     }
 
     public function dashboard(): void
@@ -66,5 +76,10 @@ class Menu
     public function contentForms(): void
     {
         include Paths::path('app/Admin/Views/content-forms.php');
+    }
+
+    public function reports(): void
+    {
+        include Paths::path('app/Admin/Views/reports.php');
     }
 }
