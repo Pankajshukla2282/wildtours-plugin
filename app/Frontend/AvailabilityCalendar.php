@@ -65,6 +65,15 @@ class AvailabilityCalendar
 
     public static function isDateAvailable(int $packageId, string $date): bool
     {
+        $parsedDate = \DateTime::createFromFormat('!Y-m-d', $date);
+        if (!$parsedDate || $parsedDate->format('Y-m-d') !== $date) {
+            return false;
+        }
+
+        if ($packageId <= 0 || get_post_type($packageId) !== 'pwt_package' || get_post_status($packageId) !== 'publish') {
+            return false;
+        }
+
         $today = current_time('Y-m-d');
 
         if ($date < $today) {

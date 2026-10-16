@@ -6,6 +6,8 @@ namespace PWT\Integrations;
 
 defined('ABSPATH') || exit;
 
+use PWT\Bookings\Services\EmailService;
+
 /**
  * Handles general enquiries from the "PWT Contact Form" Fluent Form:
  * stores a recent-enquiries log and emails the admin.
@@ -55,7 +57,7 @@ final class FluentContactHandler
 
         if (is_email($email) || $name !== '') {
             wp_mail(
-                get_option('admin_email'),
+                EmailService::adminRecipients(),
                 sprintf(
                     /* translators: %s: enquirer name */
                     __('New Contact Enquiry from %s', 'wildtours-plugin'),

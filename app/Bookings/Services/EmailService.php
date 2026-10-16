@@ -10,12 +10,39 @@ use PWT\Bookings\EmailTemplates;
 
 final class EmailService
 {
+    public static function adminRecipients(): array
+    {
+        $settings = (array) get_option('pwt_settings', []);
+        $notificationEmails = (string) ($settings['notification_emails'] ?? '');
+        if ($notificationEmails === '') {
+            $notificationEmails = (string) ($settings['booking_notification_emails'] ?? '');
+        }
+
+        $recipients = array_merge(
+            [(string) ($settings['contact_email'] ?? '')],
+            preg_split('/[\\s,;]+/', $notificationEmails, -1, PREG_SPLIT_NO_EMPTY)
+        );
+        $recipients = array_values(array_unique(array_filter(
+            array_map('sanitize_email', $recipients),
+            'is_email'
+        )));
+
+        if ($recipients === []) {
+            $adminEmail = sanitize_email((string) get_option('admin_email'));
+            if (is_email($adminEmail)) {
+                $recipients[] = $adminEmail;
+            }
+        }
+
+        return $recipients;
+    }
+
     public function sendAdminNotification(
         int $bookingId,
         array $booking
     ): void {
         $sent = wp_mail(
-            get_option('admin_email'),
+            self::adminRecipients(),
             EmailTemplates::bookingAdminSubject($booking['name']),
             EmailTemplates::bookingAdminBody($booking)
         );

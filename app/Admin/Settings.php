@@ -68,6 +68,18 @@ class Settings
         );
 
         add_settings_field(
+            'notification_emails',
+            __('Admin Notification Emails', 'wildtours-plugin'),
+            [$this, 'renderTextareaField'],
+            'pwt-settings',
+            'pwt_general',
+            [
+                'key' => 'notification_emails',
+                'placeholder' => __('team@example.com, manager@example.com', 'wildtours-plugin')
+            ]
+        );
+
+        add_settings_field(
             'whatsapp_number',
             __('WhatsApp Number', 'wildtours-plugin'),
             [$this, 'renderTextField'],
@@ -88,18 +100,6 @@ class Settings
             [
                 'key' => 'company_address',
                 'placeholder' => __('Panna, Madhya Pradesh, India', 'wildtours-plugin')
-            ]
-        );
-
-        add_settings_field(
-            'booking_email',
-            __('Booking Notification Email', 'wildtours-plugin'),
-            [$this, 'renderEmailField'],
-            'pwt-settings',
-            'pwt_general',
-            [
-                'key' => 'booking_email',
-                'placeholder' => __('bookings@example.com', 'wildtours-plugin')
             ]
         );
 
@@ -295,9 +295,12 @@ class Settings
         $sanitized['company_name'] = sanitize_text_field($input['company_name'] ?? '');
         $sanitized['contact_phone'] = sanitize_text_field($input['contact_phone'] ?? '');
         $sanitized['contact_email'] = sanitize_email($input['contact_email'] ?? '');
+        $notificationEmailInput = $input['notification_emails'] ?? $input['booking_notification_emails'] ?? '';
+        $notificationEmails = preg_split('/[\\s,;]+/', sanitize_textarea_field($notificationEmailInput), -1, PREG_SPLIT_NO_EMPTY);
+        $notificationEmails = array_filter(array_map('sanitize_email', $notificationEmails), 'is_email');
+        $sanitized['notification_emails'] = implode("\n", array_unique($notificationEmails));
         $sanitized['whatsapp_number'] = preg_replace('/[^0-9]/', '', (string) ($input['whatsapp_number'] ?? ''));
         $sanitized['company_address'] = sanitize_textarea_field($input['company_address'] ?? '');
-        $sanitized['booking_email'] = sanitize_email($input['booking_email'] ?? '');
         $sanitized['hero_title'] = sanitize_text_field($input['hero_title'] ?? '');
         $sanitized['hero_subtitle'] = sanitize_textarea_field($input['hero_subtitle'] ?? '');
         $featuredRaw = array_filter(array_map('absint', explode(',', (string) ($input['featured_package_ids'] ?? ''))));

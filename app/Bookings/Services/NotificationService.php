@@ -25,8 +25,11 @@ final class NotificationService
     public function enquiry(int $bookingId, array $extra = []): bool
     {
         $ctx = $this->context($bookingId, $extra);
+        $settings = (array) get_option('pwt_settings', []);
+        $recipient = (string) ($settings['contact_email'] ?? get_option('admin_email'));
+
         return $this->mailer->sendHtml(
-            (string) apply_filters('pwt/notification/admin_recipients', get_option('admin_email'), $ctx),
+            (string) apply_filters('pwt/notification/admin_recipients', $recipient, $ctx),
             EmailTemplates::adminEnquirySubject($ctx),
             EmailTemplates::adminEnquiryBody($ctx),
             ['context' => ['booking_id' => $bookingId]]

@@ -27,6 +27,10 @@
             return;
         }
 
+        const submitButton = form.querySelector("button[type='submit']");
+        if (submitButton) {
+            submitButton.disabled = true;
+        }
         updateMessage(message, window.pwtFrontend.messages.submitting, "");
 
         const formData = new FormData(form);
@@ -78,6 +82,10 @@
             }
         } catch (error) {
             updateMessage(message, window.pwtFrontend.messages.error, "is-error");
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+            }
         }
     });
 
