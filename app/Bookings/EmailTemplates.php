@@ -51,6 +51,13 @@ final class EmailTemplates
             );
         }
 
+        if (!empty($data['payment_advance_amount'])) {
+            $lines[] = self::line(
+                __('Advance Payment Due', 'wildtours-plugin'),
+                'INR ' . number_format_i18n((float) $data['payment_advance_amount'], 2)
+            );
+        }
+
         if (!empty($data['payment_link'])) {
             $lines[] = self::line(
                 __('Payment Link', 'wildtours-plugin'),

@@ -35,6 +35,15 @@ final class PaymentRepository
         return $row ?: null;
     }
 
+    public function totalPaidForBooking(int $bookingId): float
+    {
+        global $wpdb;
+        return (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT COALESCE(SUM(amount), 0) FROM " . Schema::tables()['payments'] . " WHERE booking_id=%d AND status='paid'",
+            $bookingId
+        ));
+    }
+
     public function markPaid(int $id, array $gatewayResponse = []): bool
     {
         global $wpdb;

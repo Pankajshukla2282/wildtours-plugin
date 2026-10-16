@@ -315,6 +315,61 @@
     flex-wrap: wrap;
 }
 
+.pwt-booking-progress {
+    margin: 20px 0;
+    padding: 16px;
+    border: 1px solid rgba(18, 53, 36, 0.16);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.pwt-booking-progress h3 {
+    margin: 0 0 12px;
+}
+
+.pwt-booking-progress ol {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pwt-booking-progress li {
+    display: grid;
+    gap: 3px;
+    padding: 9px 12px;
+    border-left: 3px solid rgba(18, 53, 36, 0.2);
+}
+
+.pwt-booking-progress li span {
+    color: #59645f;
+}
+
+.pwt-booking-progress li.is-complete {
+    border-left-color: #287348;
+}
+
+.pwt-booking-progress li.is-current {
+    border-left-color: var(--pwt-gold);
+    background: rgba(220, 184, 104, 0.1);
+}
+
+.pwt-booking-progress li.is-error {
+    border-left-color: #a12424;
+    background: rgba(161, 36, 36, 0.06);
+}
+
+.pwt-booking-progress li.is-pending {
+    color: #59645f;
+}
+
+.pwt-booking-progress > p {
+    margin: 10px 0 0;
+    font-size: 0.9em;
+    color: #59645f;
+}
+
 .pwt-portal-toolbar {
     margin-left: auto;
     flex-shrink: 0;

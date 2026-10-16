@@ -87,6 +87,9 @@ final class BookingService
         if (!empty($payment['payment_url'])) {
             $emailData['payment_link'] = $payment['payment_url'];
         }
+        if (isset($payment['advance_amount'])) {
+            $emailData['payment_advance_amount'] = (float) $payment['advance_amount'];
+        }
 
         $this->emailService->sendAdminNotification(
             $bookingId,

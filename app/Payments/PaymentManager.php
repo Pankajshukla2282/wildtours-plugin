@@ -2,6 +2,7 @@
 
 namespace PWT\Payments;
 
+use PWT\Bookings\Services\EmailService;
 use PWT\Payments\Gateways\GatewayFactory;
 
 defined('ABSPATH') || exit;
@@ -25,7 +26,7 @@ class PaymentManager
         $paymentUrl = (string) ($intent['payment_url'] ?? '');
 
         update_post_meta($bookingId, '_pwt_payment_token', $token);
-        update_post_meta($bookingId, '_pwt_payment_token_expires', time() + DAY_IN_SECONDS);
+        update_post_meta($bookingId, '_pwt_payment_token_expires', time() + (30 * DAY_IN_SECONDS));
         update_post_meta($bookingId, '_pwt_payment_status', 'pending_payment');
         update_post_meta($bookingId, '_pwt_payment_advance_percent', $advancePercent);
         update_post_meta($bookingId, '_pwt_payment_due_amount', $advanceAmount);
@@ -87,6 +88,15 @@ class PaymentManager
         }
 
         $settings = get_option('pwt_settings', []);
+        $totalAmount = (float) get_post_meta($bookingId, '_pwt_payment_total_amount', true);
+        $advanceAmount = (float) get_post_meta($bookingId, '_pwt_payment_due_amount', true);
+        $normalizedBookingId = absint(get_post_meta($bookingId, '_pwt_normalized_booking_id', true));
+        $paidAmount = $normalizedBookingId > 0
+            ? (new PaymentRepository())->totalPaidForBooking($normalizedBookingId)
+            : 0.0;
+        $amountDue = $paidAmount > 0
+            ? max(0, $totalAmount - $paidAmount)
+            : min($advanceAmount, $totalAmount);
 
         return [
             'booking_id' => $bookingId,
@@ -95,8 +105,14 @@ class PaymentManager
             'package_name' => get_the_title((int) get_post_meta($bookingId, '_pwt_package_id', true)),
             'travel_date' => (string) get_post_meta($bookingId, '_pwt_travel_date', true),
             'status' => (string) get_post_meta($bookingId, '_pwt_payment_status', true),
-            'advance_amount' => (float) get_post_meta($bookingId, '_pwt_payment_due_amount', true),
-            'total_amount' => (float) get_post_meta($bookingId, '_pwt_payment_total_amount', true),
+            'booking_status' => (string) get_post_meta($bookingId, '_pwt_status', true),
+            'payment_review_status' => (string) get_post_meta($bookingId, '_pwt_payment_review_status', true),
+            'payment_submitted_at' => (string) get_post_meta($bookingId, '_pwt_payment_submitted_at', true),
+            'payment_reviewed_at' => (string) get_post_meta($bookingId, '_pwt_payment_reviewed_at', true),
+            'advance_amount' => $amountDue,
+            'amount_due' => $amountDue,
+            'paid_amount' => $paidAmount,
+            'total_amount' => $totalAmount,
             'payment_reference' => (string) get_post_meta($bookingId, '_pwt_payment_reference', true),
             'payment_method' => (string) get_post_meta($bookingId, '_pwt_payment_method', true),
             'gateway' => (string) get_post_meta($bookingId, '_pwt_payment_gateway', true),
@@ -131,16 +147,36 @@ class PaymentManager
         $method = sanitize_text_field($_POST['payment_method'] ?? 'upi');
         $settings = get_option('pwt_settings', []);
         $allowedMethods = self::allowedPaymentMethods($settings);
+        $context = self::portalContext($token);
+        $paymentAmount = round((float) sanitize_text_field($_POST['payment_amount'] ?? 0), 2);
+        $amountDue = (float) ($context['amount_due'] ?? 0);
 
-        if ($reference === '' || !in_array($method, $allowedMethods, true)) {
+        if (
+            $reference === ''
+            || !in_array($method, $allowedMethods, true)
+            || $paymentAmount <= 0
+            || $amountDue <= 0
+            || $paymentAmount > $amountDue + 0.005
+        ) {
             wp_safe_redirect(add_query_arg('payment_error', '1', wp_get_referer() ?: home_url('/')));
             exit;
         }
 
         update_post_meta($bookingId, '_pwt_payment_reference', $reference);
         update_post_meta($bookingId, '_pwt_payment_method', $method);
+        update_post_meta($bookingId, '_pwt_payment_submitted_amount', $paymentAmount);
         update_post_meta($bookingId, '_pwt_payment_status', 'verification_pending');
+        update_post_meta($bookingId, '_pwt_payment_review_status', 'pending');
         update_post_meta($bookingId, '_pwt_payment_submitted_at', current_time('mysql'));
+        update_post_meta($bookingId, '_pwt_payment_token_expires', time() + (30 * DAY_IN_SECONDS));
+
+        (new EmailService())->sendPaymentReferenceNotice($bookingId, [
+            'name' => (string) get_post_meta($bookingId, '_pwt_name', true),
+            'email' => (string) get_post_meta($bookingId, '_pwt_email', true),
+            'amount' => $paymentAmount,
+            'method' => $method,
+            'reference' => $reference,
+        ]);
 
         wp_safe_redirect(add_query_arg('payment_success', '1', wp_get_referer() ?: home_url('/')));
         exit;
@@ -165,7 +201,7 @@ class PaymentManager
         $map = [
             'pending_payment' => ['verification_pending', 'failed', 'cancelled'],
             'verification_pending' => ['partial_paid', 'paid', 'failed', 'cancelled'],
-            'partial_paid' => ['paid', 'failed', 'cancelled'],
+            'partial_paid' => ['verification_pending', 'paid', 'failed', 'cancelled'],
             'paid' => [],
             'failed' => ['pending_payment', 'verification_pending', 'cancelled'],
             'cancelled' => [],

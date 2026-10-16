@@ -288,6 +288,16 @@ class Shortcodes
             'card' => __('Card', 'wildtours-plugin'),
             'net_banking' => __('Net Banking', 'wildtours-plugin'),
         ];
+        $paymentStatus = sanitize_key((string) ($context['status'] ?? 'pending_payment'));
+        $reviewRejected = ($context['payment_review_status'] ?? '') === 'rejected';
+        $referenceSubmitted = !empty($context['payment_submitted_at']);
+        $bookingConfirmed = in_array((string) ($context['booking_status'] ?? ''), ['confirmed', 'paid'], true)
+            || in_array($paymentStatus, ['partial_paid', 'paid'], true);
+        $referenceStep = $reviewRejected ? 'is-error' : ($referenceSubmitted ? 'is-complete' : 'is-current');
+        $reviewStep = $reviewRejected
+            ? 'is-error'
+            : ($paymentStatus === 'verification_pending' ? 'is-current' : ($bookingConfirmed ? 'is-complete' : 'is-pending'));
+        $balanceStep = $paymentStatus === 'paid' ? 'is-complete' : ($bookingConfirmed ? 'is-current' : 'is-pending');
 
         ob_start();
         ?>
@@ -295,7 +305,7 @@ class Shortcodes
             <header class="pwt-section-header">
                 <div>
                     <h2><?php esc_html_e('Complete Your Booking Payment', 'wildtours-plugin'); ?></h2>
-                    <p><?php esc_html_e('Pay the advance amount and submit the transaction reference for confirmation.', 'wildtours-plugin'); ?></p>
+                    <p><?php esc_html_e('Pay the amount due now and submit the transaction reference for verification.', 'wildtours-plugin'); ?></p>
                 </div>
                 <div class="pwt-portal-toolbar">
                     <?php echo $this->currencySwitcher(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -305,14 +315,55 @@ class Shortcodes
                 <p class="pwt-form-message is-success"><?php esc_html_e('Payment reference submitted. We will verify and confirm your booking shortly.', 'wildtours-plugin'); ?></p>
             <?php elseif (!empty($_GET['payment_error'])) : ?>
                 <p class="pwt-form-message is-error"><?php esc_html_e('Payment reference is required.', 'wildtours-plugin'); ?></p>
+            <?php elseif ($reviewRejected) : ?>
+                <p class="pwt-form-message is-error"><?php esc_html_e('Your last payment reference could not be verified. Please correct it and resubmit below.', 'wildtours-plugin'); ?></p>
             <?php endif; ?>
             <div class="pwt-meta-grid">
                 <div class="pwt-meta-chip"><strong><?php esc_html_e('Guest', 'wildtours-plugin'); ?>:</strong> <?php echo esc_html($context['name']); ?></div>
                 <div class="pwt-meta-chip"><strong><?php esc_html_e('Package', 'wildtours-plugin'); ?>:</strong> <?php echo esc_html($context['package_name']); ?></div>
                 <div class="pwt-meta-chip"><strong><?php esc_html_e('Travel Date', 'wildtours-plugin'); ?>:</strong> <?php echo esc_html($context['travel_date']); ?></div>
-                <div class="pwt-meta-chip"><strong><?php esc_html_e('Advance Due', 'wildtours-plugin'); ?>:</strong> <?php echo esc_html($this->formatPortalAmount((float) $context['advance_amount'])); ?></div>
+                <div class="pwt-meta-chip"><strong><?php esc_html_e('Amount Due Now', 'wildtours-plugin'); ?>:</strong> <?php echo esc_html($this->formatPortalAmount((float) $context['amount_due'])); ?></div>
                 <div class="pwt-meta-chip"><strong><?php esc_html_e('Status', 'wildtours-plugin'); ?>:</strong> <?php echo esc_html(\PWT\Payments\PaymentManager::statusLabel((string) $context['status'])); ?></div>
             </div>
+            <section class="pwt-booking-progress" aria-live="polite">
+                <h3><?php esc_html_e('Booking Progress', 'wildtours-plugin'); ?></h3>
+                <ol>
+                    <li class="is-complete"><strong><?php esc_html_e('Request received', 'wildtours-plugin'); ?></strong><span><?php esc_html_e('Your booking details are with our team.', 'wildtours-plugin'); ?></span></li>
+                    <li class="<?php echo esc_attr($referenceStep); ?>"><strong><?php esc_html_e('Payment reference', 'wildtours-plugin'); ?></strong><span><?php
+                        if ($reviewRejected) {
+                            esc_html_e('The reference could not be verified. Submit a corrected reference below.', 'wildtours-plugin');
+                        } elseif ($referenceSubmitted) {
+                            esc_html_e('Your payment reference has been submitted.', 'wildtours-plugin');
+                        } else {
+                            esc_html_e('Submit your payment reference to continue.', 'wildtours-plugin');
+                        }
+                    ?></span></li>
+                    <li class="<?php echo esc_attr($reviewStep); ?>"><strong><?php esc_html_e('Staff review and confirmation', 'wildtours-plugin'); ?></strong><span><?php
+                        if ($paymentStatus === 'verification_pending') {
+                            esc_html_e('Our team is verifying your payment.', 'wildtours-plugin');
+                        } elseif ($bookingConfirmed) {
+                            esc_html_e('Your booking is confirmed.', 'wildtours-plugin');
+                        } else {
+                            esc_html_e('This starts after we verify your payment.', 'wildtours-plugin');
+                        }
+                    ?></span></li>
+                    <li class="<?php echo esc_attr($balanceStep); ?>"><strong><?php esc_html_e('Balance settled', 'wildtours-plugin'); ?></strong><span><?php
+                        if ($paymentStatus === 'paid') {
+                            esc_html_e('Your booking is paid in full.', 'wildtours-plugin');
+                        } elseif ($bookingConfirmed) {
+                            esc_html_e('The booking is confirmed; the remaining balance is shown above.', 'wildtours-plugin');
+                        } else {
+                            esc_html_e('Your payment balance will update after review.', 'wildtours-plugin');
+                        }
+                    ?></span></li>
+                </ol>
+                <?php if (!empty($context['payment_submitted_at'])) : ?>
+                    <p><?php esc_html_e('Last payment reference submitted:', 'wildtours-plugin'); ?> <?php echo esc_html($context['payment_submitted_at']); ?></p>
+                <?php endif; ?>
+                <?php if (!empty($context['payment_reviewed_at'])) : ?>
+                    <p><?php esc_html_e('Last staff update:', 'wildtours-plugin'); ?> <?php echo esc_html($context['payment_reviewed_at']); ?></p>
+                <?php endif; ?>
+            </section>
             <?php if ($context['upi_id']) : ?>
                 <p><strong><?php esc_html_e('UPI ID', 'wildtours-plugin'); ?>:</strong> <?php echo esc_html($context['upi_id']); ?></p>
             <?php endif; ?>
@@ -320,12 +371,16 @@ class Shortcodes
                 <div><?php echo wp_kses_post(wpautop($context['instructions'])); ?></div>
             <?php endif; ?>
 
-            <?php if (!in_array($context['status'], ['paid', 'partial_paid', 'verification_pending'], true)) : ?>
+            <?php if (!in_array($context['status'], ['paid', 'verification_pending'], true) && (float) $context['amount_due'] > 0) : ?>
                 <form method="post" class="pwt-booking-form">
                     <?php wp_nonce_field('pwt_payment_portal_' . $context['booking_id']); ?>
                     <input type="hidden" name="action" value="pwt_submit_payment_reference">
                     <input type="hidden" name="payment_token" value="<?php echo esc_attr($token); ?>">
                     <div class="pwt-form-grid">
+                        <label>
+                            <span><?php esc_html_e('Payment Amount (INR) *', 'wildtours-plugin'); ?></span>
+                            <input type="number" name="payment_amount" min="0.01" max="<?php echo esc_attr(number_format((float) $context['amount_due'], 2, '.', '')); ?>" step="0.01" value="<?php echo esc_attr(number_format((float) $context['amount_due'], 2, '.', '')); ?>" required>
+                        </label>
                         <label>
                             <span><?php esc_html_e('Payment Method', 'wildtours-plugin'); ?></span>
                             <select name="payment_method">

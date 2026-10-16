@@ -43,6 +43,17 @@ final class BookingDataRepository
         return is_array($row) ? $row : [];
     }
 
+    public function findByLegacyPostId(int $postId): array
+    {
+        global $wpdb;
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM " . Schema::tables()['bookings'] . " WHERE legacy_post_id=%d ORDER BY id DESC LIMIT 1",
+            $postId
+        ), ARRAY_A);
+
+        return is_array($row) ? $row : [];
+    }
+
     public function updateStatus(int $id, string $status): bool
     {
         global $wpdb;
